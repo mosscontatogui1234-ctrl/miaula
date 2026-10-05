@@ -22,6 +22,11 @@
 </script>
 </head>
 <body>
+<script>
+  // Já abre no modo noite (se for o caso), sem piscar a tela clara antes.
+  (function () { try { var d = JSON.parse(localStorage.getItem(location.search.indexOf('demo') >= 0 ? 'miaula:demo' : 'miaula:v1') || '{}'), t = (d.ajustes && d.ajustes.tema) || 'auto';
+    if (t === 'escuro' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) document.body.className = 'escuro'; } catch (e) { } })();
+</script>
 <div id="app">
   <main id="tela" aria-live="off"></main>
   <nav id="abas" aria-label="Abas do app"></nav>
