@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Miaula</title>
+<meta name="description" content="O app de estudos da Julia, com o Pãozinho e a Poponi.">
+<meta name="theme-color" content="#7A1E3A">
+<meta name="robots" content="noindex, nofollow">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Miaula">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<link rel="preload" href="fontes/dmsans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fontes/playfair.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="estilo.css">
+<script>
+  // Guarda o pedido de instalação do Chrome assim que ele aparecer.
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__pedidoInstalar = e; document.dispatchEvent(new Event('miaula-pode-instalar')); });
+</script>
+</head>
+<body>
+<div id="app">
+  <main id="tela" aria-live="off"></main>
+  <nav id="abas" aria-label="Abas do app"></nav>
+</div>
+<div id="ov"></div>
+<script src="conteudo/materias.js"></script>
+<script src="conteudo/extras.js"></script>
+<script src="conteudo/aulas-mat.js"></script>
+<script src="conteudo/aulas-por.js"></script>
+<script src="conteudo/aulas-lit.js"></script>
+<script src="conteudo/aulas-fis.js"></script>
+<script src="conteudo/aulas-qui.js"></script>
+<script src="conteudo/aulas-bio.js"></script>
+<script src="conteudo/aulas-his.js"></script>
+<script src="conteudo/aulas-geo.js"></script>
+<script src="conteudo/aulas-fil-soc.js"></script>
+<script src="conteudo/aulas-ing.js"></script>
+<script src="arte.js"></script>
+<script src="nucleo.js"></script>
+<script src="telas.js"></script>
+</body>
+</html>
