@@ -4,7 +4,7 @@
 const PARAMS = new URLSearchParams(location.search);
 const DEMO = PARAMS.has('demo');
 const CHAVE = DEMO ? 'miaula:demo' : 'miaula:v1';
-const VERSAO_APP = '1.1';
+const VERSAO_APP = '1.2';
 const LIM = [1, 3, 7, 15, 30];
 const NOMES_FASE = ['Nenenzinha', 'Filhotinha', 'Gatinha', 'Gata', 'Gatona'];
 const INTERVALOS = [0, 1, 3, 7, 14, 30];
@@ -49,10 +49,11 @@ function todasAulasDe(m) { return [1, 2, 3].reduce(function (l, a) { return l.co
 function dbPadrao() {
   return {
     v: 1, nome: 'Julia', tourVisto: false,
-    ajustes: { sons: true, animacoes: true, pao: true },
+    ajustes: { sons: true, animacoes: true, pao: true, tema: 'auto' },
     ano: 1, velFala: 1,
     prog: {}, cartoes: {}, resp: [], seg: {}, dias: [],
-    poponi: { dias: 0, ultimo: null, aviso: null },
+    poponi: { dias: 0, ultimo: null, aviso: null, roupa: null, recorde: 0 },
+    conquistas: {}, erros: {}, errosLimpos: 0, cartoesVistos: 0, simulados: [],
     plano: { 0: ['rev'], 1: ['mat', 'por'], 2: ['bio', 'his'], 3: ['fis', 'geo'], 4: ['qui', 'lit'], 5: ['ing', 'fil', 'soc'], 6: ['red', 'rev'] },
     hoje: { data: null, tarefas: [] },
     redacoes: [], pensamentos: [],
@@ -66,12 +67,14 @@ function carregar() {
     const t = localStorage.getItem(CHAVE);
     if (t) {
       const o = JSON.parse(t), p = dbPadrao();
-      return Object.assign(p, o, {
+      const r = Object.assign(p, o, {
         ajustes: Object.assign(p.ajustes, o.ajustes || {}),
         pao: Object.assign(p.pao, o.pao || {}),
         poponi: Object.assign(p.poponi, o.poponi || {}),
         hoje: o.hoje || p.hoje
       });
+      r.poponi.recorde = Math.max(r.poponi.recorde || 0, r.poponi.dias || 0);
+      return r;
     }
   } catch (e) { /* começa do zero */ }
   return dbPadrao();
@@ -165,10 +168,25 @@ function progDe(id) { return db.prog[id] || {}; }
 function progEditar(id) { return db.prog[id] || (db.prog[id] = {}); }
 function pctTopico(id) { const p = progDe(id); return Math.round(((p.resumo ? 1 : 0) + (p.quiz != null ? 1 : 0) + (p.cartoes ? 1 : 0)) / 3 * 100); }
 function pctLista(lista) { if (!lista.length) return null; return Math.round(lista.reduce(function (s, t) { return s + pctTopico(t.id); }, 0) / lista.length); }
-function registrarResposta(tid, mid, ok) {
+// n = número da pergunta na aula: as erradas vão pra lista "Meus erros" e saem quando acerta.
+function registrarResposta(tid, mid, ok, n) {
   db.resp.push({ d: hojeStr(), t: tid, m: mid, ok: ok ? 1 : 0 });
-  if (db.resp.length > 4000) db.resp.splice(0, db.resp.length - 4000);
+  if (db.resp.length > 4000) {
+    const velhas = db.resp.splice(0, db.resp.length - 4000);
+    db.acertosAntigos = (db.acertosAntigos || 0) + velhas.reduce(function (s, x) { return s + x.ok; }, 0);
+  }
+  if (n == null) return;
+  const k = tid + ':' + n;
+  if (!ok) db.erros[k] = { n: ((db.erros[k] || {}).n || 0) + 1, d: hojeStr() };
+  else if (db.erros[k]) { delete db.erros[k]; db.errosLimpos = (db.errosLimpos || 0) + 1; }
 }
+function erroInfo(k) {
+  const i = k.lastIndexOf(':');
+  const T = TOP_POR_ID[k.slice(0, i)], n = +k.slice(i + 1);
+  if (!T || !T.t.perguntas || !T.t.perguntas[n]) return null;
+  return { P: T.t.perguntas[n], t: T.t, m: T.m, n: n };
+}
+function listaErros() { return Object.keys(db.erros).filter(erroInfo); }
 
 // ---------- Poponi ----------
 function fasePoponi(d) { let f = 0; for (let i = 0; i < LIM.length; i++) if (d >= LIM[i]) f = i; return f; }
@@ -196,34 +214,121 @@ function marcarEstudo() {
   if (p.ultimo !== h) {
     const fa = fasePoponi(p.dias);
     p.dias += 1; p.ultimo = h; p.aviso = null;
+    p.recorde = Math.max(p.recorde || 0, p.dias);
     const fd = fasePoponi(p.dias);
     salvar();
     if (fd > fa) setTimeout(function () { festa(fd); }, 800);
     else setTimeout(function () { paoFalar('poponi'); }, 900);
     atualizarMiniPoponi();
+    checarConquistas();
     return true;
   }
   salvar();
+  checarConquistas();
   return false;
 }
 function atualizarMiniPoponi() {
   const b = document.querySelector('.poponi-mini');
   if (b) b.innerHTML = miniPoponiHTML();
 }
+function roupaAtual() { const r = db.poponi.roupa; return r && roupaLiberada(r) ? r : null; }
 function miniPoponiHTML() {
   const d = db.poponi.dias;
-  return ARTE.poponi(fasePoponi(d), 46, d === 0) + '<span>' + (d === 0 ? 'zzz' : plural(d, 'dia', 'dias')) + '</span>';
+  return ARTE.poponi(fasePoponi(d), 46, d === 0, roupaAtual()) + '<span>' + (d === 0 ? 'zzz' : plural(d, 'dia', 'dias')) + '</span>';
 }
 function festa(fase) {
   som('cresce');
   const el = document.createElement('div');
   el.className = 'festa';
   el.innerHTML = '<div class="festa-caixa" role="dialog" aria-label="A Poponi cresceu">' +
-    '<div class="cresce">' + ARTE.poponi(fase, 190) + '</div>' +
+    '<div class="cresce">' + ARTE.poponi(fase, 190, false, roupaAtual()) + '</div>' +
     '<h2>A Poponi cresceu!</h2><p>Agora ela é a <b>' + NOMES_FASE[fase] + '</b>. Tudo porque você estudou ' + plural(db.poponi.dias, 'dia', 'dias') + '.</p>' +
     '<button class="btn largo" type="button">Que lindo!</button></div>';
   document.body.appendChild(el);
   el.querySelector('button').addEventListener('click', function () { el.remove(); });
+}
+
+// ---------- Conquistas e roupinhas ----------
+function contaProg(f) { return Object.keys(db.prog).filter(function (id) { return TOP_POR_ID[id] && f(db.prog[id]); }).length; }
+function totalAcertos() { return db.resp.reduce(function (s, x) { return s + x.ok; }, 0) + (db.acertosAntigos || 0); }
+function fechouMateria() {
+  return MATERIAS.some(function (m) {
+    return [1, 2, 3].some(function (a) { const l = aulasDe(m, a); return l.length > 0 && l.every(function (t) { return pctTopico(t.id) === 100; }); });
+  });
+}
+const CONQUISTAS = [
+  { id: 'resumo1', nome: 'Primeira leitura', como: 'Terminar um resumo', ico: 'materias', ok: function () { return contaProg(function (p) { return p.resumo; }) >= 1; } },
+  { id: 'quiz1', nome: 'Primeiro treino', como: 'Terminar as perguntas de uma aula', ico: 'alvo', ok: function () { return contaProg(function (p) { return p.quiz != null; }) >= 1; } },
+  { id: 'perfeito', nome: 'Gabaritou!', como: 'Acertar todas as perguntas de uma aula', ico: 'estrela', ok: function () { return contaProg(function (p) { return p.quiz === 100; }) >= 1; } },
+  { id: 'dias3', nome: '3 dias', como: 'A Poponi chegar em 3 dias de estudo', ico: 'coracao', roupa: 'lacinho', ok: function () { return (db.poponi.recorde || 0) >= 3; } },
+  { id: 'dias7', nome: '7 dias', como: 'A Poponi chegar em 7 dias de estudo', ico: 'coracao', roupa: 'oculos', ok: function () { return (db.poponi.recorde || 0) >= 7; } },
+  { id: 'dias15', nome: '15 dias', como: 'A Poponi chegar em 15 dias de estudo', ico: 'coracao', roupa: 'flores', ok: function () { return (db.poponi.recorde || 0) >= 15; } },
+  { id: 'dias30', nome: '30 dias', como: 'A Poponi chegar em 30 dias de estudo', ico: 'coracao', roupa: 'capelo', ok: function () { return (db.poponi.recorde || 0) >= 30; } },
+  { id: 'certas50', nome: '50 acertos', como: 'Acertar 50 perguntas', ico: 'check', ok: function () { return totalAcertos() >= 50; } },
+  { id: 'certas100', nome: '100 acertos', como: 'Acertar 100 perguntas', ico: 'check', roupa: 'cachecol', ok: function () { return totalAcertos() >= 100; } },
+  { id: 'certas500', nome: '500 acertos', como: 'Acertar 500 perguntas', ico: 'check', ok: function () { return totalAcertos() >= 500; } },
+  { id: 'aulas10', nome: '10 aulas completas', como: 'Fazer resumo, perguntas e cartões de 10 aulas', ico: 'medalha', ok: function () { return contaProg(function (p) { return p.resumo && p.quiz != null && p.cartoes; }) >= 10; } },
+  { id: 'materia', nome: 'Matéria fechada', como: 'Completar todas as aulas de uma matéria num ano', ico: 'estrela', ok: fechouMateria },
+  { id: 'cartoes100', nome: '100 cartões', como: 'Passar 100 cartões', ico: 'cartoes', ok: function () { return (db.cartoesVistos || 0) >= 100; } },
+  { id: 'redacao', nome: 'Escritora', como: 'Salvar uma redação com 80 palavras ou mais', ico: 'lapis', ok: function () { return db.redacoes.some(function (r) { return (r.texto.trim().match(/\S+/g) || []).length >= 80; }); } },
+  { id: 'simulado', nome: 'Primeiro simulado', como: 'Terminar um simulado', ico: 'relogio', ok: function () { return db.simulados.length >= 1; } },
+  { id: 'simulado80', nome: 'Mandou no simulado', como: 'Acertar 80% num simulado de 10 perguntas ou mais', ico: 'medalha', ok: function () { return db.simulados.some(function (s) { return s.total >= 10 && s.certas / s.total >= 0.8; }); } },
+  { id: 'erros10', nome: 'Aprendeu com os erros', como: 'Acertar 10 perguntas que você tinha errado', ico: 'alvo', ok: function () { return (db.errosLimpos || 0) >= 10; } },
+  { id: 'calma', nome: 'Respira fundo', como: 'Fazer 10 respirações na aba Calma', ico: 'calma', ok: function () { return (db.respiracoes || 0) >= 10; } }
+];
+const ROUPAS_NOMES = { lacinho: 'Lacinho', oculos: 'Óculos', flores: 'Coroa de flores', capelo: 'Chapéu de formatura', cachecol: 'Cachecol' };
+function conquistaDaRoupa(r) { return CONQUISTAS.find(function (c) { return c.roupa === r; }); }
+function roupaLiberada(r) { const c = conquistaDaRoupa(r); return !!(c && db.conquistas[c.id]); }
+let filaConquistas = [], timerConquistas = null;
+function checarConquistas(quieto) {
+  const novas = CONQUISTAS.filter(function (c) {
+    if (db.conquistas[c.id]) return false;
+    try { return c.ok(); } catch (e) { return false; }
+  });
+  if (!novas.length) return [];
+  novas.forEach(function (c) { db.conquistas[c.id] = hojeStr(); });
+  salvar();
+  if (!quieto) {
+    filaConquistas = filaConquistas.concat(novas);
+    clearTimeout(timerConquistas);
+    timerConquistas = setTimeout(mostrarConquistas, 1400);
+  }
+  return novas;
+}
+function mostrarConquistas() {
+  if (!filaConquistas.length) return;
+  // Espera a festa da Poponi, o tour ou a tela de instalar saírem da frente.
+  if ($('.festa') || $('.tour')) { timerConquistas = setTimeout(mostrarConquistas, 900); return; }
+  const lista = filaConquistas; filaConquistas = [];
+  const roupas = lista.filter(function (c) { return c.roupa; });
+  som('feito');
+  const el = document.createElement('div');
+  el.className = 'festa';
+  const titulo = lista.length === 1 ? 'Medalha nova!' : plural(lista.length, 'medalha nova', 'medalhas novas') + '!';
+  let html = '<div class="festa-caixa" role="dialog" aria-label="' + esc(titulo) + '"><div class="medalhas" style="width:100%;grid-template-columns:repeat(' + Math.min(3, lista.length) + ',minmax(0,1fr))">' +
+    lista.slice(0, 6).map(function (c) { return '<div class="medalha" style="background:transparent"><span class="disco cresce">' + ico(c.ico, 26) + '</span><b>' + esc(c.nome) + '</b></div>'; }).join('') + '</div>';
+  if (lista.length > 6) html += '<p class="mini">e mais ' + (lista.length - 6) + '...</p>';
+  html += '<h2>' + esc(titulo) + '</h2>';
+  if (roupas.length) {
+    const r = roupas[roupas.length - 1].roupa;
+    html += '<div>' + ARTE.poponi(Math.max(1, fasePoponi(db.poponi.dias)), 130, false, r) + '</div><p>A Poponi ganhou ' + (roupas.length > 1 ? 'roupinhas novas' : 'uma roupinha nova') + ': <b>' + roupas.map(function (c) { return ROUPAS_NOMES[c.roupa]; }).join(', ') + '</b>!</p>' +
+      '<button class="btn largo" type="button" data-f="vestir" data-r="' + r + '">Vestir agora</button><button class="btn sec largo" type="button" data-f="ok">Depois</button>';
+  } else {
+    html += '<p>' + esc(lista.length === 1 ? lista[0].como + '. Arrasou!' : 'Você tá colecionando medalhas!') + '</p><button class="btn largo" type="button" data-f="ok">Que legal!</button>';
+  }
+  el.innerHTML = html + '</div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-f]');
+    if (!b) return;
+    if (b.dataset.f === 'vestir') {
+      db.poponi.roupa = b.dataset.r; salvar();
+      atualizarMiniPoponi();
+      if (rota.t === 'poponi' || rota.t === 'conquistas') atualizar();
+      toast('A Poponi amou!');
+    }
+    el.remove();
+  });
 }
 
 // ---------- Plano de hoje ----------
@@ -292,10 +397,11 @@ let sessao = {};
 const TELAS = {};
 const ACOES = {};
 const ENTRADAS = {};
-const ABA_DA_TELA = { materia: 'materias', topico: 'materias', redacao: 'materias', escrever: 'materias', revisao: 'cartoes', consulta: 'materiais', videos: 'materiais', semana: 'plano', cinco: 'calma', tirar: 'calma', prova: 'calma', recado: 'calma', poponi: 'inicio', ajuda: 'inicio', ajustes: 'inicio' };
-const TELAS_ESTUDO = ['topico', 'revisao', 'escrever', 'redacao', 'consulta', 'materia'];
+const ABA_DA_TELA = { materia: 'materias', topico: 'materias', redacao: 'materias', escrever: 'materias', simulado: 'materias', erros: 'materias', revisao: 'cartoes', consulta: 'materiais', videos: 'materiais', semana: 'plano', cinco: 'calma', tirar: 'calma', prova: 'calma', recado: 'calma', poponi: 'inicio', conquistas: 'inicio', ajuda: 'inicio', ajustes: 'inicio' };
+const TELAS_ESTUDO = ['topico', 'revisao', 'escrever', 'redacao', 'consulta', 'materia', 'simulado', 'erros'];
 
-function aoSairDaTela() { pararFala(); pararRespiro(); }
+let relogioSim = null;
+function aoSairDaTela() { pararFala(); pararRespiro(); clearInterval(relogioSim); relogioSim = null; }
 // O navegador só guarda uns 50 passos pra trás. Depois de 25 telas seguidas,
 // a tela nova substitui a atual em vez de empilhar, pra o "voltar" nunca se perder.
 const MAX_PROFUNDIDADE = 25;
@@ -680,7 +786,7 @@ OVS.calc = calcHTML;
 OVS.ajuda = function (chave) {
   const a = AJUDA[chave] || AJUDA.ajuda;
   return '<div class="folha-topo"><h2>' + esc(a[0]) + '</h2><button class="btn-ico claro" type="button" data-a="fecharOv" aria-label="Fechar">' + ico('fechar', 20) + '</button></div>' +
-    '<div class="conteudo"><div class="recado">' + '<div class="recado-gato" style="background:#fff">' + ARTE.pao(58) + '</div><p style="font-size:16px;line-height:1.5">' + esc(a[1]) + '</p></div>' +
+    '<div class="conteudo"><div class="recado">' + '<div class="recado-gato" style="background:var(--cartao)">' + ARTE.pao(58) + '</div><p style="font-size:16px;line-height:1.5">' + esc(a[1]) + '</p></div>' +
     '<button class="btn sec largo" type="button" data-a="tourDeNovo">Ver o tour do começo de novo</button></div>';
 };
 function desenharOv() {
