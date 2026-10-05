@@ -4,7 +4,7 @@
 const PARAMS = new URLSearchParams(location.search);
 const DEMO = PARAMS.has('demo');
 const CHAVE = DEMO ? 'miaula:demo' : 'miaula:v1';
-const VERSAO_APP = '1.2';
+const VERSAO_APP = '1.3';
 const LIM = [1, 3, 7, 15, 30];
 const NOMES_FASE = ['Nenenzinha', 'Filhotinha', 'Gatinha', 'Gata', 'Gatona'];
 const INTERVALOS = [0, 1, 3, 7, 14, 30];
