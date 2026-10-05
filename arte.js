@@ -103,6 +103,18 @@ window.ARTE = (function () {
       '</g></svg>';
   }
 
+  // Rostinho da Poponi pro joguinho.
+  function rostinho(w) {
+    return '<svg width="' + w + '" height="' + w + '" viewBox="40 30 120 112" aria-hidden="true">' +
+      '<path d="M60 72L56 34L90 54Z" fill="#E8964A" stroke="#E8964A" stroke-width="6" stroke-linejoin="round"/>' +
+      '<path d="M140 72L144 34L110 54Z" fill="#2B2420" stroke="#2B2420" stroke-width="6" stroke-linejoin="round"/>' +
+      '<path d="M65 64L63 46L80 56Z" fill="#F2B3B8"/><circle cx="100" cy="94" r="44" fill="#E8964A"/>' +
+      '<ellipse cx="100" cy="114" rx="24" ry="16" fill="#FFF8F0"/><path d="M100 52C96 62 96 74 100 84C104 74 104 62 100 52Z" fill="#FFF8F0"/>' +
+      '<ellipse cx="82" cy="96" rx="9" ry="11" fill="#2A2A33"/><ellipse cx="118" cy="96" rx="9" ry="11" fill="#2A2A33"/>' +
+      '<circle cx="85" cy="92" r="3.5" fill="#fff"/><circle cx="121" cy="92" r="3.5" fill="#fff"/>' +
+      '<path d="M96 107L104 107L100 112Z" fill="#D98A9C"/><circle cx="116" cy="121" r="4" fill="#2B2420"/></svg>';
+  }
+
   function logo(w) {
     w = w || 96;
     return '<svg width="' + w + '" height="' + w + '" viewBox="0 0 200 200" aria-hidden="true"><rect width="200" height="200" rx="46" fill="#FFF6F4"/>' +
@@ -151,6 +163,7 @@ window.ARTE = (function () {
     medalha: '<circle cx="12" cy="15" r="6"/><path d="M8.5 10.5L6 3h4l2 4 2-4h4l-2.5 7.5"/>',
     relogio: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
     alvo: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+    pata: '<ellipse cx="12" cy="16" rx="5" ry="4" fill="currentColor" stroke="none"/><circle cx="6" cy="10" r="2.2" fill="currentColor" stroke="none"/><circle cx="10" cy="6.5" r="2.2" fill="currentColor" stroke="none"/><circle cx="14" cy="6.5" r="2.2" fill="currentColor" stroke="none"/><circle cx="18" cy="10" r="2.2" fill="currentColor" stroke="none"/>',
     lua: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>',
     sol: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     cadeado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -162,5 +175,5 @@ window.ARTE = (function () {
     return '<svg class="ico" width="' + tam + '" height="' + tam + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + (P[nome] || '') + '</svg>';
   }
 
-  return { pao: pao, poponi: poponi, logo: logo, icone: icone, roupas: Object.keys(ROUPAS) };
+  return { pao: pao, poponi: poponi, rostinho: rostinho, logo: logo, icone: icone, roupas: Object.keys(ROUPAS) };
 })();
