@@ -85,6 +85,23 @@ html:has(body.escuro) { background: #1A1114; }
 .correcao .r-nao { color: var(--erro-txt); font-weight: 700; }
 .correcao .r-ok { color: var(--ok-txt); font-weight: 700; }
 
+/* Sudoku de gatinho */
+.jogo-regra { margin: 0; font-size: 14px; line-height: 1.4; color: #F6DCE1; }
+.jogo-tab { display: grid; gap: 5px; background: var(--cartao); padding: 8px; border-radius: 22px; width: 100%; max-width: 400px; align-self: center; }
+.jogo-tab.grande { gap: 3px; padding: 6px; border-radius: 18px; }
+.casa { aspect-ratio: 1 / 1; border-radius: 12px; border: 3px solid transparent; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 0; color: rgba(122, 30, 58, 0.45); }
+.jogo-tab.grande .casa { border-radius: 8px; border-width: 2px; }
+.casa svg { width: 76%; height: 76%; }
+.casa .ico { width: 40%; height: 40%; }
+.casa.briga { border-color: var(--erro); }
+.casa.novo svg { animation: pop 0.3s ease-out; }
+.r0 { background: #F7C9D4; } .r1 { background: #D5C8F2; } .r2 { background: #C9E7B8; } .r3 { background: #FCD8B0; }
+.r4 { background: #BFDDF4; } .r5 { background: #F6EAA0; } .r6 { background: #DDDDDD; } .r7 { background: #B5E5DE; }
+body.escuro .r0 { background: #7A3550; } body.escuro .r1 { background: #4E3F8F; } body.escuro .r2 { background: #3D7A3A; } body.escuro .r3 { background: #8F5A1F; }
+body.escuro .r4 { background: #2A5A86; } body.escuro .r5 { background: #7C7424; } body.escuro .r6 { background: #55555E; } body.escuro .r7 { background: #1D6461; }
+body.escuro .casa { color: rgba(255, 255, 255, 0.5); }
+.jogo-info { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; color: var(--suave); }
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--fundo); overflow: hidden; }
 body { font-family: 'DM Sans', system-ui, sans-serif; color: var(--texto); font-size: 16px; line-height: 1.45; overscroll-behavior: none; }
@@ -338,7 +355,7 @@ textarea.campo { resize: vertical; min-height: 120px; line-height: 1.5; }
 
 body.sem-anim .pao-corpo, body.sem-anim .pao-sombra, body.sem-anim .pp-corpo, body.sem-anim .pp-rabo, body.sem-anim .pp-olhos,
 body.sem-anim .entra, body.sem-anim .cresce, body.sem-anim .pulinho, body.sem-anim .treme, body.sem-anim #pao.pop .pao-svg,
-body.sem-anim .folha, body.sem-anim .toast { animation: none !important; }
+body.sem-anim .folha, body.sem-anim .toast, body.sem-anim .casa svg { animation: none !important; }
 body.sem-anim .flip-in { transition: none; }
 
 /* Folhas (janelas que sobem) */
