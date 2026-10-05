@@ -652,11 +652,113 @@ TELAS.calma = function () {
   html += '<div class="cartao borda secao" style="align-items:center;text-align:center"><span class="mini" style="color:var(--destaque);font-weight:700;letter-spacing:.06em">' + ico('coracao', 14) + ' LEMBRETE PRA VOCÊ</span>' +
     '<p class="frase entra" id="autoTxt" style="font-size:19px;line-height:1.4">“' + esc(sessao.autoestima) + '”</p>' +
     '<button class="btn sec peq" type="button" data-a="outraAuto">' + ico('girar', 16) + ' Outra frase</button></div>';
+  const PJ = faseJogo();
+  html += '<button class="item cartao borda" type="button" data-a="ir" data-v="jogo" style="padding:12px 14px"><span class="recado-gato" style="width:54px;height:54px;background:var(--rosa-claro)">' + ARTE.rostinho(40) + '</span>' +
+    '<span class="item-txt"><b>Joguinho pra descansar</b><span class="mini">Sudoku de gatinho' + (PJ ? ' · Fase ' + db.jogo.fase + ' · ' + NIVEL_JOGO[PJ.n] : '') + '</span></span><span class="seta">' + ico('seta', 18) + '</span></button>';
   html += '<div class="grade2">' + [['cinco', '5 coisas que você vê', 'Volta pro agora, passo a passo'], ['tirar', 'Tirar da cabeça', 'Escreve o que tá preocupando'], ['prova', 'Antes da prova', 'Dicas rápidas pra hora H'], ['recado', 'Recado do MOSS', 'Uma mensagem só pra você']].map(function (c) {
     return '<button class="consulta-btn" type="button" data-a="ir" data-v="' + c[0] + '"><b>' + c[1] + '</b><span class="mini">' + c[2] + '</span></button>';
   }).join('') + '</div>';
   html += '<p class="cvv">Se ficar muito pesado, fala com alguém de confiança. O CVV atende de graça, a qualquer hora, no <a href="tel:188">188</a>.</p></div>';
   return { html: html };
+};
+// ================= Sudoku de gatinho =================
+// Um gatinho por linha, coluna e cor; não podem se encostar nem na diagonal.
+// Não conta como estudo (é pra descansar), mas dá a medalha "Mestre dos gatinhos".
+const NIVEL_JOGO = { 5: 'Fácil', 6: 'Médio', 7: 'Difícil', 8: 'Desafio' };
+// Depois da última fase, as difíceis e os desafios voltam em rodízio.
+function faseJogo() {
+  const F = window.JOGO_FASES || [];
+  if (!F.length) return null;
+  const i = db.jogo.fase - 1;
+  if (i < F.length) return F[i];
+  const grandes = F.filter(function (p) { return p.n >= 7; });
+  return grandes[(i - F.length) % grandes.length];
+}
+function casasJogo(P) {
+  const j = db.jogo;
+  if (!j.cel || j.celFase !== j.fase || j.cel.length !== P.n * P.n) { j.cel = Array(P.n * P.n).fill(0); j.celFase = j.fase; }
+  return j.cel;
+}
+function brigasJogo(P, cel) {
+  const n = P.n, reg = function (i) { return P.m[Math.floor(i / n)][i % n]; };
+  const gatos = [];
+  cel.forEach(function (v, i) { if (v === 2) gatos.push(i); });
+  const briga = {};
+  gatos.forEach(function (a) {
+    gatos.forEach(function (b) {
+      if (a >= b) return;
+      const ra = Math.floor(a / n), ca = a % n, rb = Math.floor(b / n), cb = b % n;
+      if (ra === rb || ca === cb || reg(a) === reg(b) || (Math.abs(ra - rb) <= 1 && Math.abs(ca - cb) <= 1)) { briga[a] = 1; briga[b] = 1; }
+    });
+  });
+  return { gatos: gatos, briga: briga, venceu: gatos.length === n && !Object.keys(briga).length };
+}
+TELAS.jogo = function () {
+  const P = faseJogo();
+  if (!P) return { html: topo({ titulo: 'Sudoku de gatinho' }) + '<div class="conteudo"><div class="cartao">O jogo não carregou. Tente abrir de novo.</div></div>' };
+  const n = P.n, cel = casasJogo(P), b = brigasJogo(P, cel);
+  const regra = '<p class="jogo-regra">Esconda ' + n + ' gatinhos: um em cada linha, cada coluna e cada cor. Eles não podem se encostar, nem na diagonal.</p>';
+  let html = topo({ titulo: 'Sudoku de gatinho', sub: 'Fase ' + db.jogo.fase + ' · ' + NIVEL_JOGO[n], ajuda: 'jogo', semCalc: true, extra: regra }) + '<div class="conteudo">';
+  html += '<div class="jogo-info"><span>Gatinhos: <b style="color:var(--destaque)">' + b.gatos.length + ' de ' + n + '</b></span><span>Toque 1x: patinha · 2x: gatinho</span></div>';
+  html += '<div class="jogo-tab' + (n >= 7 ? ' grande' : '') + '" style="grid-template-columns:repeat(' + n + ',minmax(0,1fr))">' + cel.map(function (v, i) {
+    const r = Math.floor(i / n), c = i % n, k = P.m[r].charCodeAt(c) - 65;
+    const nome = 'Linha ' + (r + 1) + ', coluna ' + (c + 1) + (v === 2 ? ', gatinho' : v === 1 ? ', patinha' : '');
+    return '<button class="casa r' + k + (b.briga[i] ? ' briga' : '') + (v === 2 && sessao.novoGato === i ? ' novo' : '') + '" type="button" data-a="casa" data-v="' + i + '" aria-label="' + nome + '">' +
+      (v === 2 ? ARTE.rostinho(40) : v === 1 ? ico('pata', 16) : '') + '</button>';
+  }).join('') + '</div>';
+  if (Object.keys(b.briga).length) html += '<p class="centro" style="color:var(--erro);font-weight:700;font-size:14px">Opa! Tem gatinho brigando (os de borda vermelha).</p>';
+  html += '<div class="linha-btns"><button class="btn sec" type="button" data-a="jogoRecomecar">Recomeçar</button><button class="btn" type="button" data-a="jogoDica">Dica</button></div>';
+  html += '<p class="mini centro">' + (db.jogo.feitas ? 'Você já passou ' + plural(db.jogo.feitas, 'fase', 'fases') + '.' : 'Dica: comece pelas cores pequenas, elas têm poucos lugares pro gatinho.') + '</p>';
+  return { html: html + '</div>', semAbas: true };
+};
+ACOES.casa = function (el) {
+  if (sessao.jogoGanhou) return;
+  const P = faseJogo(), cel = casasJogo(P), i = +el.dataset.v;
+  cel[i] = (cel[i] + 1) % 3;
+  sessao.novoGato = cel[i] === 2 ? i : null;
+  som(cel[i] === 2 ? 'pop' : 'virar');
+  const b = brigasJogo(P, cel);
+  // Desenha o tabuleiro resolvido antes de passar de fase, pra ela ver os gatinhos que achou.
+  atualizar();
+  if (b.venceu) {
+    sessao.jogoGanhou = true;
+    db.jogo.feitas = (db.jogo.feitas || 0) + 1;
+    db.jogo.fase += 1; db.jogo.cel = null; db.jogo.celFase = null;
+  }
+  salvar();
+  if (b.venceu) {
+    som('feito');
+    const prox = faseJogo();
+    $('#tela').insertAdjacentHTML('beforeend', '<div class="festa" id="jogoFim"><div class="festa-caixa" role="dialog" aria-label="Fase completa">' +
+      '<div class="cresce">' + ARTE.poponi(Math.max(1, fasePoponi(db.poponi.dias)), 150, false, roupaAtual()) + '</div><h2>Achou todos!</h2>' +
+      '<p>Os ' + P.n + ' gatinhos estão bem acomodados.' + (prox && prox.n > P.n ? ' A próxima fase é maior: ' + prox.n + ' por ' + prox.n + '!' : '') + '</p>' +
+      '<button class="btn largo" type="button" data-a="jogoProxima">Próxima fase</button><button class="btn sec largo" type="button" data-a="jogoSair">Voltar a estudar</button></div></div>');
+    checarConquistas();
+  }
+};
+ACOES.jogoProxima = function () { sessao.jogoGanhou = false; sessao.novoGato = null; desenhar(true); };
+ACOES.jogoSair = function () { sessao.jogoGanhou = false; abrirAba('inicio'); };
+ACOES.jogoRecomecar = function () {
+  if (sessao.jogoGanhou) return;
+  const P = faseJogo();
+  db.jogo.cel = Array(P.n * P.n).fill(0); db.jogo.celFase = db.jogo.fase;
+  sessao.novoGato = null; salvar(); som('virar'); atualizar();
+};
+ACOES.jogoDica = function () {
+  if (sessao.jogoGanhou) return;
+  const P = faseJogo(), cel = casasJogo(P), n = P.n;
+  const certo = function (i) { return P.s[Math.floor(i / n)] === i % n; };
+  const errado = cel.findIndex(function (v, i) { return v === 2 && !certo(i); });
+  if (errado >= 0) { cel[errado] = 1; toast('Esse gatinho não fica aí. Troquei por uma patinha.'); salvar(); atualizar(); return; }
+  for (let r = 0; r < n; r++) {
+    const i = r * n + P.s[r];
+    if (cel[i] !== 2) {
+      cel[i] = 1;
+      toast('Um gatinho fica aqui!');
+      ACOES.casa({ dataset: { v: String(i) } });
+      return;
+    }
+  }
 };
 ACOES.outraAuto = function () {
   sessao.autoestima = paoFrase('autoestima');
@@ -1110,7 +1212,7 @@ ACOES.errProx = function () {
 
 // ================= Ajuda e ajustes =================
 TELAS.ajuda = function () {
-  const partes = [['inicio', 'inicio'], ['materias', 'materias'], ['topico', 'materias'], ['cartoes', 'cartoes'], ['materiais', 'materiais'], ['plano', 'plano'], ['calma', 'calma'], ['redacao', 'lapis'], ['simulado', 'relogio'], ['erros', 'alvo'], ['poponi', 'coracao'], ['conquistas', 'medalha']];
+  const partes = [['inicio', 'inicio'], ['materias', 'materias'], ['topico', 'materias'], ['cartoes', 'cartoes'], ['materiais', 'materiais'], ['plano', 'plano'], ['calma', 'calma'], ['redacao', 'lapis'], ['simulado', 'relogio'], ['erros', 'alvo'], ['jogo', 'pata'], ['poponi', 'coracao'], ['conquistas', 'medalha']];
   let html = topo({ titulo: 'Ajuda', sub: 'Esqueceu como funciona? Toca aqui.' }) + '<div class="conteudo">';
   html += '<button class="item cartao borda" type="button" data-a="tourDeNovo" style="padding:12px 14px"><span class="recado-gato" style="width:54px;height:54px;background:var(--rosa-claro)">' + ARTE.pao(48) + '</span><span class="item-txt"><b>Ver o tour de novo</b><span class="mini">O Pãozinho mostra tudo outra vez</span></span><span class="seta">' + ico('seta', 18) + '</span></button>';
   html += '<section class="secao"><h2 class="titulo-sec">Como funciona cada parte</h2><div class="lista">' + partes.map(function (p) {
