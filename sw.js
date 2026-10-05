@@ -1,10 +1,10 @@
 // Guarda o app no celular pra funcionar sem internet.
-const VERSAO = 'miaula-v6';
+const VERSAO = 'miaula-v7';
 const ARQUIVOS = [
   './', 'index.html', 'estilo.css', 'arte.js', 'nucleo.js', 'telas.js', 'manifest.json',
   'conteudo/materias.js', 'conteudo/extras.js',
   'conteudo/aulas-mat.js', 'conteudo/aulas-por.js', 'conteudo/aulas-lit.js', 'conteudo/aulas-fis.js', 'conteudo/aulas-qui.js',
-  'conteudo/aulas-bio.js', 'conteudo/aulas-his.js', 'conteudo/aulas-geo.js', 'conteudo/aulas-fil-soc.js', 'conteudo/aulas-ing.js',
+  'conteudo/aulas-bio.js', 'conteudo/aulas-his.js', 'conteudo/aulas-geo.js', 'conteudo/aulas-fil-soc.js', 'conteudo/aulas-ing.js', 'conteudo/jogo.js',
   'fontes/dmsans.woff2', 'fontes/playfair.woff2', 'fontes/playfair-italico.woff2',
   'icones/icone-192.png', 'icones/icone-512.png', 'icones/icone-mascara-512.png', 'icones/icone-180.png'
 ];
