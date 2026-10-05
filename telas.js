@@ -45,6 +45,7 @@ TELAS.inicio = function () {
   const due = cartoesParaHoje().length;
   let html = '<header class="topo"><div class="saudacao"><div class="topo-txt"><span class="sub">' + esc(dataLonga(new Date())) + '</span><h1>Olá, ' + esc(db.nome) + '</h1></div>' +
     '<div class="acoes-topo"><button class="poponi-mini" type="button" data-a="ir" data-v="poponi" aria-label="Ver a Poponi">' + miniPoponiHTML() + '</button>' +
+    '<button class="btn-ico" type="button" data-a="trocarTema" aria-label="' + (temaEscuro() ? 'Mudar pro modo claro' : 'Mudar pro modo noite') + '">' + ico(temaEscuro() ? 'sol' : 'lua') + '</button>' +
     '<button class="btn-ico" type="button" data-a="calc" aria-label="Calculadora">' + ico('calc') + '</button></div></div>' +
     '<div class="recado"><div class="recado-gato">' + ARTE.pao(58) + '</div><p class="frase">“' + esc(fraseDoDia()) + '”</p></div></header>';
   html += '<div class="conteudo">';
@@ -639,7 +640,7 @@ ACOES.respirar = function () {
   if (RESP.ativo) {
     const n = RESP.ciclos;
     pararRespiro(); salvar(); aplicarRespiro(); checarConquistas();
-    if (n >= 2) paoFalar('', 'Muito bem. ' + plural(n, 'respiração', 'respirações') + '. Como você tá agora?');
+    if (n >= 2) paoFalar('', 'Muito bem. ' + plural(n, 'respiração', 'respirações') + '. ' + paoFrase('autoestima'));
   } else { RESP.ativo = true; RESP.ciclos = 0; RESP.fase = -1; passoRespiro(0); }
 };
 TELAS.calma = function () {
@@ -647,11 +648,21 @@ TELAS.calma = function () {
   html += '<div class="respiro-caixa"><div class="respiro"><div class="c1" id="rc1"></div><div class="c2" id="rc2"></div><div class="gato" id="rgato">' + ARTE.pao(120) + '</div></div>' +
     '<div class="respiro-txt" id="rtxt" aria-live="polite">Vamos respirar juntos?</div><div class="mini" id="rdica">Inspira 4, segura 4, solta 6</div>' +
     '<button class="btn" type="button" id="rbtn" data-a="respirar" style="min-width:160px">Começar</button></div>';
+  if (!sessao.autoestima) sessao.autoestima = paoFrase('autoestima');
+  html += '<div class="cartao borda secao" style="align-items:center;text-align:center"><span class="mini" style="color:var(--destaque);font-weight:700;letter-spacing:.06em">' + ico('coracao', 14) + ' LEMBRETE PRA VOCÊ</span>' +
+    '<p class="frase entra" id="autoTxt" style="font-size:19px;line-height:1.4">“' + esc(sessao.autoestima) + '”</p>' +
+    '<button class="btn sec peq" type="button" data-a="outraAuto">' + ico('girar', 16) + ' Outra frase</button></div>';
   html += '<div class="grade2">' + [['cinco', '5 coisas que você vê', 'Volta pro agora, passo a passo'], ['tirar', 'Tirar da cabeça', 'Escreve o que tá preocupando'], ['prova', 'Antes da prova', 'Dicas rápidas pra hora H'], ['recado', 'Recado do MOSS', 'Uma mensagem só pra você']].map(function (c) {
     return '<button class="consulta-btn" type="button" data-a="ir" data-v="' + c[0] + '"><b>' + c[1] + '</b><span class="mini">' + c[2] + '</span></button>';
   }).join('') + '</div>';
   html += '<p class="cvv">Se ficar muito pesado, fala com alguém de confiança. O CVV atende de graça, a qualquer hora, no <a href="tel:188">188</a>.</p></div>';
   return { html: html };
+};
+ACOES.outraAuto = function () {
+  sessao.autoestima = paoFrase('autoestima');
+  salvar(); som('virar');
+  const p = $('#autoTxt');
+  if (p) { p.textContent = '“' + sessao.autoestima + '”'; p.classList.remove('entra'); void p.offsetWidth; p.classList.add('entra'); }
 };
 TELAS.cinco = function () {
   const i = sessao.cinco || 0;
@@ -1143,6 +1154,11 @@ function aplicarAjustes() {
   if (m) m.setAttribute('content', escuro ? '#1A1114' : '#7A1E3A');
 }
 if (CEL_ESCURO) { try { CEL_ESCURO.addEventListener('change', aplicarAjustes); } catch (e) { try { CEL_ESCURO.addListener(aplicarAjustes); } catch (e2) { } } }
+ACOES.trocarTema = function () {
+  db.ajustes.tema = temaEscuro() ? 'claro' : 'escuro';
+  salvar(); aplicarAjustes(); som('ok'); atualizar();
+  toast(db.ajustes.tema === 'escuro' ? 'Modo noite ligado' : 'Modo claro ligado');
+};
 ACOES.tema = function (el) { db.ajustes.tema = el.dataset.v; salvar(); aplicarAjustes(); som('ok'); atualizar(); };
 ACOES.exportar = function () {
   const blob = new Blob([JSON.stringify(db)], { type: 'application/json' });
