@@ -4,7 +4,7 @@
 const PARAMS = new URLSearchParams(location.search);
 const DEMO = PARAMS.has('demo');
 const CHAVE = DEMO ? 'miaula:demo' : 'miaula:v1';
-const VERSAO_APP = '1.3';
+const VERSAO_APP = '1.4';
 const LIM = [1, 3, 7, 15, 30];
 const NOMES_FASE = ['Nenenzinha', 'Filhotinha', 'Gatinha', 'Gata', 'Gatona'];
 const INTERVALOS = [0, 1, 3, 7, 14, 30];
@@ -54,6 +54,7 @@ function dbPadrao() {
     prog: {}, cartoes: {}, resp: [], seg: {}, dias: [],
     poponi: { dias: 0, ultimo: null, aviso: null, roupa: null, recorde: 0 },
     conquistas: {}, erros: {}, errosLimpos: 0, cartoesVistos: 0, simulados: [],
+    jogo: { fase: 1, feitas: 0, cel: null, celFase: null },
     plano: { 0: ['rev'], 1: ['mat', 'por'], 2: ['bio', 'his'], 3: ['fis', 'geo'], 4: ['qui', 'lit'], 5: ['ing', 'fil', 'soc'], 6: ['red', 'rev'] },
     hoje: { data: null, tarefas: [] },
     redacoes: [], pensamentos: [],
@@ -71,6 +72,7 @@ function carregar() {
         ajustes: Object.assign(p.ajustes, o.ajustes || {}),
         pao: Object.assign(p.pao, o.pao || {}),
         poponi: Object.assign(p.poponi, o.poponi || {}),
+        jogo: Object.assign(p.jogo, o.jogo || {}),
         hoje: o.hoje || p.hoje
       });
       r.poponi.recorde = Math.max(r.poponi.recorde || 0, r.poponi.dias || 0);
@@ -274,7 +276,8 @@ const CONQUISTAS = [
   { id: 'simulado', nome: 'Primeiro simulado', como: 'Terminar um simulado', ico: 'relogio', ok: function () { return db.simulados.length >= 1; } },
   { id: 'simulado80', nome: 'Mandou no simulado', como: 'Acertar 80% num simulado de 10 perguntas ou mais', ico: 'medalha', ok: function () { return db.simulados.some(function (s) { return s.total >= 10 && s.certas / s.total >= 0.8; }); } },
   { id: 'erros10', nome: 'Aprendeu com os erros', como: 'Acertar 10 perguntas que você tinha errado', ico: 'alvo', ok: function () { return (db.errosLimpos || 0) >= 10; } },
-  { id: 'calma', nome: 'Respira fundo', como: 'Fazer 10 respirações na aba Calma', ico: 'calma', ok: function () { return (db.respiracoes || 0) >= 10; } }
+  { id: 'calma', nome: 'Respira fundo', como: 'Fazer 10 respirações na aba Calma', ico: 'calma', ok: function () { return (db.respiracoes || 0) >= 10; } },
+  { id: 'gatinhos', nome: 'Mestre dos gatinhos', como: 'Passar 10 fases do Sudoku de gatinho', ico: 'pata', ok: function () { return ((db.jogo || {}).feitas || 0) >= 10; } }
 ];
 const ROUPAS_NOMES = { lacinho: 'Lacinho', oculos: 'Óculos', flores: 'Coroa de flores', capelo: 'Chapéu de formatura', cachecol: 'Cachecol' };
 function conquistaDaRoupa(r) { return CONQUISTAS.find(function (c) { return c.roupa === r; }); }
@@ -397,7 +400,7 @@ let sessao = {};
 const TELAS = {};
 const ACOES = {};
 const ENTRADAS = {};
-const ABA_DA_TELA = { materia: 'materias', topico: 'materias', redacao: 'materias', escrever: 'materias', simulado: 'materias', erros: 'materias', revisao: 'cartoes', consulta: 'materiais', videos: 'materiais', semana: 'plano', cinco: 'calma', tirar: 'calma', prova: 'calma', recado: 'calma', poponi: 'inicio', conquistas: 'inicio', ajuda: 'inicio', ajustes: 'inicio' };
+const ABA_DA_TELA = { materia: 'materias', topico: 'materias', redacao: 'materias', escrever: 'materias', simulado: 'materias', erros: 'materias', revisao: 'cartoes', consulta: 'materiais', videos: 'materiais', semana: 'plano', cinco: 'calma', tirar: 'calma', prova: 'calma', recado: 'calma', jogo: 'calma', poponi: 'inicio', conquistas: 'inicio', ajuda: 'inicio', ajustes: 'inicio' };
 const TELAS_ESTUDO = ['topico', 'revisao', 'escrever', 'redacao', 'consulta', 'materia', 'simulado', 'erros'];
 
 let relogioSim = null;
