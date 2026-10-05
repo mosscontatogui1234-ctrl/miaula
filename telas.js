@@ -56,21 +56,23 @@ TELAS.inicio = function () {
       return '<button class="tarefa' + (t.feito ? ' feita' : '') + '" type="button" data-a="tarefa" data-v="' + i + '"><span class="bolinha">' + (t.feito ? ico('check', 14) : '') + '</span>' +
         '<span class="item-txt"><b>' + esc(inf.titulo) + '</b><span class="mini">' + esc(inf.sub) + '</span></span><span class="seta">' + ico('seta', 18) + '</span></button>';
     }).join('') + '</div>';
-    if (feitas === tarefas.length) html += '<div class="cartao centro frase" style="color:var(--vinho);font-size:17px">Tudo feito por hoje! Que orgulho.</div>';
+    if (feitas === tarefas.length) html += '<div class="cartao centro frase" style="color:var(--destaque);font-size:17px">Tudo feito por hoje! Que orgulho.</div>';
   }
   html += '</section>';
   if (due && !tarefas.some(function (t) { return t.tipo === 'rev' && !t.feito; })) {
     html += '<button class="item cartao borda" type="button" data-a="ir" data-v="revisao" style="padding:12px 14px"><span class="item-ico">' + ico('cartoes', 20) + '</span><span class="item-txt"><b>' + plural(due, 'cartão pra revisar', 'cartões pra revisar') + '</b><span class="mini">Leva só uns minutinhos</span></span><span class="seta">' + ico('seta', 18) + '</span></button>';
   }
+  html += treinoHTML();
   const dia = db.plano[new Date().getDay()] || [];
   const ids = dia.filter(function (id) { return MAT_POR_ID[id] && !MAT_POR_ID[id].especial; });
   ['mat', 'por', 'bio', 'his', 'fis', 'qui'].forEach(function (id) { if (ids.length < 4 && ids.indexOf(id) < 0) ids.push(id); });
   html += '<section class="secao"><h2 class="titulo-sec">Matérias</h2><div class="grade2">' + ids.slice(0, 4).map(function (id) {
     const m = MAT_POR_ID[id], pct = pctLista(todasAulasDe(m)) || 0;
-    return '<button class="materia-mini" type="button" data-a="ir" data-v="materia" data-id="' + id + '"><span class="linha-sec" style="width:100%"><b>' + esc(m.nome) + '</b><span class="mini" style="color:var(--vinho);font-weight:700">' + pct + '%</span></span><span class="barra" style="width:100%"><i style="width:' + pct + '%"></i></span></button>';
+    return '<button class="materia-mini" type="button" data-a="ir" data-v="materia" data-id="' + id + '"><span class="linha-sec" style="width:100%"><b>' + esc(m.nome) + '</b><span class="mini" style="color:var(--destaque);font-weight:700">' + pct + '%</span></span><span class="barra" style="width:100%"><i style="width:' + pct + '%"></i></span></button>';
   }).join('') + '</div></section>';
   html += '<div class="lista">' +
     itemSeta({ titulo: 'Sua semana', sub: 'Tempo, acertos e o que revisar', ico: ico('grafico', 20), attrs: 'data-a="ir" data-v="semana"' }) +
+    itemSeta({ titulo: 'Conquistas', sub: Object.keys(db.conquistas).length + ' de ' + CONQUISTAS.length + ' medalhas', ico: ico('medalha', 20), attrs: 'data-a="ir" data-v="conquistas"' }) +
     itemSeta({ titulo: 'Ajuda e ajustes', sub: 'Rever o tour e como tudo funciona', ico: ico('ajuda', 20), attrs: 'data-a="ir" data-v="ajuda"' }) +
     '</div>';
   html += '</div>';
@@ -87,7 +89,7 @@ ACOES.tarefa = function (el) {
 // ================= Matérias =================
 TELAS.materias = function () {
   let html = topo({ titulo: 'Matérias', voltar: false, ajuda: 'materias', extra: anoChips() });
-  html += '<div class="conteudo"><div class="grade2">' + MATERIAS.map(function (m) {
+  html += '<div class="conteudo">' + treinoHTML() + '<h2 class="titulo-sec">Todas as matérias</h2><div class="grade2">' + MATERIAS.map(function (m) {
     let sub, barra = '';
     if (m.especial === 'redacao') sub = 'Tema novo toda semana';
     else {
@@ -192,7 +194,7 @@ function quizHTML(T) {
   if (q.fim) {
     const pct = Math.round(q.acertos / N * 100);
     const msg = pct >= 80 ? 'Mandou muito bem!' : pct >= 50 ? 'Foi bem! Mais um treino e fica perfeito.' : 'Tá aprendendo! Relê o resumo e tenta de novo.';
-    return '<div class="resultado entra">' + ARTE.pao(150) + '<div class="grande">' + q.acertos + ' de ' + N + '</div><p class="frase" style="font-size:20px;color:var(--vinho)">' + msg + '</p></div>' +
+    return '<div class="resultado entra">' + ARTE.pao(150) + '<div class="grande">' + q.acertos + ' de ' + N + '</div><p class="frase" style="font-size:20px;color:var(--destaque)">' + msg + '</p></div>' +
       '<button class="btn largo" type="button" data-a="abaTopico" data-v="cartoes">Ir pros cartões</button>' +
       '<button class="btn sec largo" type="button" data-a="refazerQuiz">Fazer de novo</button>';
   }
@@ -226,7 +228,7 @@ ACOES.responder = function (el) {
     som('erro');
     if (Math.random() < 0.5) paoFalar('erro');
   }
-  registrarResposta(q.tid, T.m.id, ok);
+  registrarResposta(q.tid, T.m.id, ok, q.ordem[q.i]);
   salvar();
   atualizar();
   const ex = document.querySelector('.explica');
@@ -263,7 +265,7 @@ function sessaoCartoesHTML(s) {
       ? '<button class="btn largo" type="button" data-a="refazerCartoes">Passar de novo</button><button class="btn sec largo" type="button" data-a="voltar">Voltar</button>'
       : '<button class="btn largo" type="button" data-a="voltar">Voltar</button>';
     return '<div class="resultado entra">' + ARTE.pao(140) + '<div class="grande">' + s.ja + ' de ' + s.total + '</div>' +
-      '<p class="frase" style="font-size:19px;color:var(--vinho)">' + (s.ja === s.total ? 'Você sabia todos!' : 'Cartões que você já sabia de primeira.') + '</p>' +
+      '<p class="frase" style="font-size:19px;color:var(--destaque)">' + (s.ja === s.total ? 'Você sabia todos!' : 'Cartões que você já sabia de primeira.') + '</p>' +
       '<p class="mini">' + (s.ja < s.total ? 'Os que você não sabia voltam amanhã na aba Cartões.' : 'Eles voltam na aba Cartões na hora certa de revisar.') + '</p></div>' + fim;
   }
   const id = s.fila[s.i], inf = cardInfo(id);
@@ -291,6 +293,7 @@ ACOES.cartao = function (el) {
   if (!s || s.fim) return;
   const id = s.fila[s.i], sabia = el.dataset.v === '1';
   responderCartao(id, sabia);
+  db.cartoesVistos = (db.cartoesVistos || 0) + 1;
   if (!s.vistos[id]) { s.vistos[id] = 1; if (sabia) s.ja++; }
   if (sabia) som('ok');
   else if (!s.rep[id]) { s.rep[id] = 1; s.fila.push(id); }
@@ -321,7 +324,7 @@ TELAS.cartoes = function () {
       '<div class="tags">' + Object.keys(porMat).map(function (n) { return '<span class="tag">' + esc(n) + ' · ' + porMat[n] + '</span>'; }).join('') + '</div>' +
       '<button class="btn largo" type="button" data-a="ir" data-v="revisao">Revisar agora</button></div>';
   } else {
-    html += '<div class="cartao vazio-msg">' + ARTE.pao(110) + '<b style="color:var(--vinho)">Nada pra revisar hoje!</b><span>Os cartões que você já viu voltam aqui sozinhos, na hora certa de revisar.</span></div>';
+    html += '<div class="cartao vazio-msg">' + ARTE.pao(110) + '<b style="color:var(--destaque)">Nada pra revisar hoje!</b><span>Os cartões que você já viu voltam aqui sozinhos, na hora certa de revisar.</span></div>';
   }
   const novos = [];
   MATERIAS.forEach(function (m) { todasAulasDe(m).forEach(function (t) { if (t.cartoes && !progDe(t.id).cartoes) novos.push({ t: t, m: m }); }); });
@@ -337,7 +340,7 @@ TELAS.revisao = function () {
   let s = sessao.cards;
   if (!s) s = sessao.cards = novaSessaoCartoes(embaralha(cartoesParaHoje()).slice(0, 30), 'rev', null);
   let html = topo({ titulo: 'Revisão de cartões', ajuda: 'cartoes' }) + '<div class="conteudo">';
-  if (!s.fila.length) html += '<div class="cartao vazio-msg">' + ARTE.pao(110) + '<b style="color:var(--vinho)">Nada pra revisar agora!</b></div><button class="btn largo" type="button" data-a="voltar">Voltar</button>';
+  if (!s.fila.length) html += '<div class="cartao vazio-msg">' + ARTE.pao(110) + '<b style="color:var(--destaque)">Nada pra revisar agora!</b></div><button class="btn largo" type="button" data-a="voltar">Voltar</button>';
   else html += sessaoCartoesHTML(s);
   return { html: html + '</div>', semAbas: true };
 };
@@ -485,7 +488,7 @@ TELAS.consulta = function (r) {
   } else if (r.tipo === 'estados') {
     corpo = CONSULTA.regioes.map(function (g) {
       return '<section class="secao"><h2 class="titulo-sec">' + esc(g[0]) + '</h2><div class="lista">' + g[1].map(function (e) {
-        return '<div class="item" style="min-height:44px"><span class="item-txt"><b>' + esc(e[0]) + '</b></span><span class="mini" style="color:var(--vinho);font-weight:700">' + esc(e[1]) + '</span></div>';
+        return '<div class="item" style="min-height:44px"><span class="item-txt"><b>' + esc(e[0]) + '</b></span><span class="mini" style="color:var(--destaque);font-weight:700">' + esc(e[1]) + '</span></div>';
       }).join('') + '</div></section>';
     }).join('');
   } else if (r.tipo === 'linha') {
@@ -602,7 +605,7 @@ TELAS.semana = function () {
   html += '<div class="lista">';
   if (melhor) html += '<div class="item"><span class="item-txt"><span class="mini" style="color:var(--ok);font-weight:700">MELHOROU</span><b>' + esc(MAT_POR_ID[melhor.m].nome) + '</b></span><b style="color:var(--ok-txt)">' + melhor.de + '% → ' + melhor.para + '%</b></div>';
   revisar.forEach(function (k) {
-    html += '<button class="item" type="button" data-a="ir" data-v="topico" data-id="' + k + '"><span class="item-txt"><span class="mini" style="color:var(--vinho);font-weight:700">PRA REVISAR</span><b>' + esc(TOP_POR_ID[k].t.titulo) + '</b></span><span class="mini">' + esc(TOP_POR_ID[k].m.nome) + '</span><span class="seta">' + ico('seta', 18) + '</span></button>';
+    html += '<button class="item" type="button" data-a="ir" data-v="topico" data-id="' + k + '"><span class="item-txt"><span class="mini" style="color:var(--destaque);font-weight:700">PRA REVISAR</span><b>' + esc(TOP_POR_ID[k].t.titulo) + '</b></span><span class="mini">' + esc(TOP_POR_ID[k].m.nome) + '</span><span class="seta">' + ico('seta', 18) + '</span></button>';
   });
   if (!melhor && !revisar.length) html += '<div class="item"><span class="item-txt mini">Quando você responder mais perguntas, aqui aparece o que melhorou e o que vale revisar.</span></div>';
   html += '</div></div>';
@@ -635,7 +638,7 @@ function passoRespiro(i) {
 ACOES.respirar = function () {
   if (RESP.ativo) {
     const n = RESP.ciclos;
-    pararRespiro(); salvar(); aplicarRespiro();
+    pararRespiro(); salvar(); aplicarRespiro(); checarConquistas();
     if (n >= 2) paoFalar('', 'Muito bem. ' + plural(n, 'respiração', 'respirações') + '. Como você tá agora?');
   } else { RESP.ativo = true; RESP.ciclos = 0; RESP.fase = -1; passoRespiro(0); }
 };
@@ -656,10 +659,10 @@ TELAS.cinco = function () {
   if (i < 5) {
     const p = CALMA.cinco[i];
     html += '<div class="cartao centro entra" style="padding:30px 18px;display:flex;flex-direction:column;gap:10px;align-items:center"><div class="passo-grande">' + p[0] + '</div><h2 class="titulo-sec">' + esc(p[1]) + '</h2><p style="color:var(--suave)">' + esc(p[2]) + '</p></div>' +
-      '<div class="pontos" style="--x:1">' + [0, 1, 2, 3, 4].map(function (k) { return '<i class="' + (k === i ? 'on' : '') + '" style="background:' + (k === i ? 'var(--vinho)' : 'var(--rosa)') + '"></i>'; }).join('') + '</div>' +
+      '<div class="pontos" style="--x:1">' + [0, 1, 2, 3, 4].map(function (k) { return '<i class="' + (k === i ? 'on' : '') + '" style="background:' + (k === i ? 'var(--destaque)' : 'var(--rosa)') + '"></i>'; }).join('') + '</div>' +
       '<p class="mini centro">Sem pressa. Quando terminar, toque em próximo.</p><button class="btn largo" type="button" data-a="cincoProx">Próximo</button>';
   } else {
-    html += '<div class="resultado entra">' + ARTE.pao(150) + '<h2 class="titulo-sec">Você voltou pro agora.</h2><p class="frase" style="font-size:18px;color:var(--vinho)">“Tô orgulhoso de você. Respira mais uma vez, bem devagar.”</p></div>' +
+    html += '<div class="resultado entra">' + ARTE.pao(150) + '<h2 class="titulo-sec">Você voltou pro agora.</h2><p class="frase" style="font-size:18px;color:var(--destaque)">“Tô orgulhoso de você. Respira mais uma vez, bem devagar.”</p></div>' +
       '<button class="btn largo" type="button" data-a="voltar">Voltar</button><button class="btn sec largo" type="button" data-a="cincoDeNovo">Fazer de novo</button>';
   }
   return { html: html + '</div>' };
@@ -707,7 +710,7 @@ TELAS.recado = function () {
   return {
     html: topo({ titulo: 'Recado do MOSS', sub: 'Uma mensagem só pra você', ajuda: 'calma' }) +
       '<div class="conteudo"><div class="cartao centro entra" style="padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:14px">' + ARTE.pao(150) +
-      '<p class="frase" style="font-size:19px;line-height:1.5;color:var(--vinho)">' + esc(txt) + '</p></div></div>'
+      '<p class="frase" style="font-size:19px;line-height:1.5;color:var(--destaque)">' + esc(txt) + '</p></div></div>'
   };
 };
 
@@ -787,7 +790,7 @@ ACOES.apagarRed = function () {
 TELAS.poponi = function () {
   const d = db.poponi.dias, f = fasePoponi(d), dorm = d === 0;
   let html = topo({ titulo: 'Poponi', sub: 'Sua gatinha de estudos', ajuda: 'poponi' }) + '<div class="conteudo">';
-  html += '<div class="cartao secao" style="align-items:center"><div class="poponi-palco">' + ARTE.poponi(f, [150, 180, 205, 230, 255][f], dorm) + '</div>';
+  html += '<div class="cartao secao" style="align-items:center"><div class="poponi-palco">' + ARTE.poponi(f, [150, 180, 205, 230, 255][f], dorm, roupaAtual()) + '</div>';
   if (dorm) html += '<h2 class="titulo-sec centro">A Poponi está dormindo</h2><p class="centro">Estude hoje pra ela acordar!</p>';
   else {
     html += '<h2 class="titulo-sec centro">Ela é a ' + NOMES_FASE[f] + '</h2><p class="centro"><b>' + plural(d, 'dia', 'dias') + '</b> de estudo</p>' +
@@ -798,18 +801,311 @@ TELAS.poponi = function () {
     return '<div class="' + (i <= f && !dorm ? 'on' : '') + '">' + ARTE.poponi(i, 30 + i * 8) + '<span>' + plural(LIM[i], 'dia', 'dias') + '</span><span>' + NOMES_FASE[i] + '</span></div>';
   }).join('') + '</div></div>';
   html += '<div class="cartao mini" style="font-size:14px;line-height:1.5">Cada dia que você estuda, ela cresce. <b>Estudar</b> é terminar um resumo, umas perguntas, uns cartões ou uma redação. Se pular um dia, ela só volta uma fase, não volta a ser neném.</div>';
+  const fv = Math.max(f, 1), atual = roupaAtual();
+  html += '<section class="secao"><div class="linha-sec"><h2 class="titulo-sec">Guarda-roupa</h2><span class="mini">' + ico('cabide', 18) + '</span></div><div class="roupas">' +
+    '<button class="roupa' + (!atual ? ' on' : '') + '" type="button" data-a="vestir" data-v="" aria-pressed="' + !atual + '">' + ARTE.poponi(fv, 76) + 'Sem roupinha</button>' +
+    ARTE.roupas.map(function (r) {
+      if (!roupaLiberada(r)) return '<div class="roupa bloq"><span class="cad">' + ico('cadeado', 26) + '</span><span>' + esc(ROUPAS_NOMES[r]) + '</span><span class="mini" style="font-weight:500;text-align:center">' + esc(conquistaDaRoupa(r).nome) + '</span></div>';
+      return '<button class="roupa' + (atual === r ? ' on' : '') + '" type="button" data-a="vestir" data-v="' + r + '" aria-pressed="' + (atual === r) + '">' + ARTE.poponi(fv, 76, false, r) + esc(ROUPAS_NOMES[r]) + '</button>';
+    }).join('') + '</div><p class="mini">As roupinhas chegam junto com algumas medalhas. Uma vez ganha, é dela pra sempre.</p></section>';
+  html += '<div class="lista">' + itemSeta({ titulo: 'Conquistas', sub: Object.keys(db.conquistas).length + ' de ' + CONQUISTAS.length + ' medalhas', ico: ico('medalha', 20), attrs: 'data-a="ir" data-v="conquistas"' }) + '</div>';
   return { html: html + '</div>' };
+};
+ACOES.vestir = function (el) {
+  db.poponi.roupa = el.dataset.v || null;
+  salvar(); som('pop'); atualizar();
+};
+
+// ================= Conquistas =================
+TELAS.conquistas = function () {
+  const n = Object.keys(db.conquistas).length;
+  let html = topo({ titulo: 'Conquistas', sub: n + ' de ' + CONQUISTAS.length + ' medalhas', ajuda: 'conquistas' }) + '<div class="conteudo"><div class="medalhas">';
+  html += CONQUISTAS.map(function (c) {
+    const d = db.conquistas[c.id];
+    return '<div class="medalha' + (d ? '' : ' bloq') + '"><span class="disco">' + ico(d ? c.ico : 'cadeado', 26) + '</span><b>' + esc(c.nome) + '</b><span>' +
+      (d ? 'Ganhou em ' + dataCurta(d) : esc(c.como)) + '</span>' + (c.roupa ? '<span style="color:var(--destaque);font-weight:700">+ ' + esc(ROUPAS_NOMES[c.roupa]) + '</span>' : '') + '</div>';
+  }).join('');
+  return { html: html + '</div></div>' };
+};
+
+// ================= Treinar: simulado e erros =================
+function treinoHTML() {
+  const n = listaErros().length, s = db.simAtual;
+  return '<section class="secao"><h2 class="titulo-sec">Treinar</h2><div class="grade2">' +
+    '<button class="treino-btn" type="button" data-a="ir" data-v="simulado"><span class="item-ico">' + ico('relogio', 20) + '</span><b>Simulado</b><span class="mini">' + (s && !s.fim ? 'Continuar de onde parou' : 'Prova de treino misturada') + '</span></button>' +
+    '<button class="treino-btn" type="button" data-a="ir" data-v="erros"><span class="item-ico">' + ico('alvo', 20) + '</span><b>Meus erros' + (n ? ' <span class="selo-num">' + n + '</span>' : '') + '</b><span class="mini">' + (n ? 'Treinar o que errou' : 'Nada pra revisar') + '</span></button>' +
+    '</div></section>';
+}
+function materiasComPerguntas() { return MATERIAS.filter(function (m) { return !m.especial; }); }
+function poolSimulado(cfg) {
+  const porMat = {};
+  materiasComPerguntas().forEach(function (m) {
+    if (cfg.mats.indexOf(m.id) < 0) return;
+    cfg.anos.forEach(function (a) {
+      aulasDe(m, a).forEach(function (t) {
+        (t.perguntas || []).forEach(function (_, n) { (porMat[m.id] = porMat[m.id] || []).push(t.id + ':' + n); });
+      });
+    });
+  });
+  return porMat;
+}
+// Mistura as matérias: pega uma de cada vez, pra prova não ficar só de uma.
+function montarSimulado(cfg) {
+  const porMat = poolSimulado(cfg), filas = Object.keys(porMat).map(function (k) { return embaralha(porMat[k]); });
+  const qs = [];
+  for (let r = 0; qs.length < cfg.qtd && filas.some(function (f) { return f.length; }); r++) {
+    embaralha(filas).forEach(function (f) { if (f.length && qs.length < cfg.qtd) qs.push(f.pop()); });
+  }
+  return embaralha(qs).map(function (k) { return { k: k, ops: embaralha(erroInfo(k).P.o.map(function (_, j) { return j; })) }; });
+}
+function cfgSimulado() {
+  return sessao.simCfg || (sessao.simCfg = { mats: materiasComPerguntas().map(function (m) { return m.id; }), anos: [db.ano], qtd: 20, tempo: 30 });
+}
+function fmtRelogio(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + pad(s % 60); }
+function restanteSim(s) { return s.lim ? s.lim - (Date.now() - s.ini) / 1000 : null; }
+
+TELAS.simulado = function (r) {
+  const s = db.simAtual;
+  if (s && s.fim && r.ver === 'res') return simResultado(s);
+  if (s && !s.fim && r.ver === 'prova') return simProva(s);
+  const cfg = cfgSimulado(), pool = poolSimulado(cfg);
+  const totalDisp = Object.keys(pool).reduce(function (t, k) { return t + pool[k].length; }, 0);
+  const chip = function (on, acao, v, txt) { return '<button class="chip' + (on ? ' on' : '') + '" type="button" data-a="' + acao + '" data-v="' + v + '" aria-pressed="' + on + '">' + txt + '</button>'; };
+  let html = topo({ titulo: 'Simulado', sub: 'Prova de treino', ajuda: 'simulado' }) + '<div class="conteudo">';
+  if (s && !s.fim) {
+    const resp = s.resp.filter(function (x) { return x != null; }).length;
+    html += '<div class="cartao borda secao"><h2 class="titulo-sec">Você tem um simulado começado</h2><p class="mini">' + resp + ' de ' + s.qs.length + ' respondidas' + (s.lim ? ' · ' + fmtRelogio(Math.max(0, restanteSim(s))) + ' restando' : '') + '</p>' +
+      '<button class="btn largo" type="button" data-a="simContinuar">Continuar</button><button class="btn sec largo" type="button" data-a="simDesistir">Desistir dele</button></div>';
+  }
+  html += '<p class="mini">Perguntas misturadas, igual numa prova. Você só vê o que acertou no final.</p>';
+  html += '<section class="secao"><div class="linha-sec"><h2 class="titulo-sec">Matérias</h2><button class="chip" type="button" data-a="simTodas">' + (cfg.mats.length === materiasComPerguntas().length ? 'Limpar' : 'Todas') + '</button></div><div class="chips">' +
+    materiasComPerguntas().map(function (m) { return chip(cfg.mats.indexOf(m.id) >= 0, 'simMat', m.id, esc(m.nome)); }).join('') + '</div></section>';
+  html += '<section class="secao"><h2 class="titulo-sec">Ano</h2><div class="chips">' + [1, 2, 3].map(function (a) { return chip(cfg.anos.indexOf(a) >= 0, 'simAno', a, a + 'º ano'); }).join('') + '</div></section>';
+  html += '<section class="secao"><h2 class="titulo-sec">Quantas perguntas</h2><div class="chips">' + [10, 20, 30].map(function (q) { return chip(cfg.qtd === q, 'simQtd', q, q + ' perguntas'); }).join('') + '</div></section>';
+  html += '<section class="secao"><h2 class="titulo-sec">Tempo</h2><div class="chips">' + [[0, 'Sem tempo'], [15, '15 min'], [30, '30 min'], [45, '45 min']].map(function (t) { return chip(cfg.tempo === t[0], 'simTempo', t[0], t[1]); }).join('') + '</div></section>';
+  const qtdReal = Math.min(cfg.qtd, totalDisp);
+  if (!totalDisp) html += '<div class="cartao mini centro">Escolha pelo menos uma matéria e um ano.</div>';
+  else if (qtdReal < cfg.qtd) html += '<p class="mini centro">Com essas escolhas dá pra fazer ' + plural(qtdReal, 'pergunta', 'perguntas') + '.</p>';
+  html += '<button class="btn largo" type="button" data-a="simComecar"' + (totalDisp ? '' : ' disabled') + '>' + ico('relogio', 18) + ' Começar simulado</button>';
+  const ult = db.simulados.slice(-3).reverse();
+  if (ult.length) {
+    html += '<section class="secao"><h2 class="titulo-sec">Últimos simulados</h2><div class="lista">' + ult.map(function (x, i) {
+      const pct = Math.round(x.certas / x.total * 100);
+      const ver = i === 0 && s && s.fim;
+      return '<' + (ver ? 'button type="button" data-a="simVerUltimo"' : 'div') + ' class="item"><span class="item-txt"><b>' + x.certas + ' de ' + x.total + ' (' + pct + '%)</b><span class="mini">' + dataCurta(x.d) + ' · ' + fmtTempo(x.seg) + '</span></span>' + (ver ? '<span class="seta">' + ico('seta', 18) + '</span></button>' : '</div>');
+    }).join('') + '</div></section>';
+  }
+  return { html: html + '</div>', semAbas: true };
+};
+function togLista(l, v) { const i = l.indexOf(v); if (i >= 0) l.splice(i, 1); else l.push(v); }
+ACOES.simMat = function (el) { togLista(cfgSimulado().mats, el.dataset.v); atualizar(); };
+ACOES.simTodas = function () { const c = cfgSimulado(), todas = materiasComPerguntas().map(function (m) { return m.id; }); c.mats = c.mats.length === todas.length ? [] : todas; atualizar(); };
+ACOES.simAno = function (el) { togLista(cfgSimulado().anos, +el.dataset.v); atualizar(); };
+ACOES.simQtd = function (el) { cfgSimulado().qtd = +el.dataset.v; atualizar(); };
+ACOES.simTempo = function (el) { cfgSimulado().tempo = +el.dataset.v; atualizar(); };
+ACOES.simComecar = function () {
+  const cfg = cfgSimulado(), qs = montarSimulado(cfg);
+  if (!qs.length) return;
+  db.simAtual = { qs: qs, resp: qs.map(function () { return null; }), i: 0, ini: Date.now(), lim: cfg.tempo * 60, fim: false };
+  salvar(); som('ok');
+  trocar({ ver: 'prova' });
+};
+ACOES.simContinuar = function () { trocar({ ver: 'prova' }); };
+ACOES.simVerUltimo = function () { trocar({ ver: 'res' }); };
+ACOES.simDesistir = function () {
+  if (!confirm('Desistir desse simulado? As respostas dele não vão contar.')) return;
+  db.simAtual = null; salvar(); atualizar();
+};
+function simProva(s) {
+  const N = s.qs.length, q = s.qs[s.i], inf = erroInfo(q.k);
+  const feitas = s.resp.filter(function (x) { return x != null; }).length;
+  const rel = s.lim ? '<span class="cronometro" id="simTempo">' + ico('relogio', 18) + '<span>' + fmtRelogio(restanteSim(s)) + '</span></span>' : '';
+  let html = topo({ titulo: 'Simulado', sub: 'Pergunta ' + (s.i + 1) + ' de ' + N, semCalc: false,
+    extra: '<div class="linha-sec"><span class="mini">' + feitas + ' de ' + N + ' respondidas</span>' + rel + '</div><div class="barra"><i style="width:' + (feitas / N * 100) + '%"></i></div>' });
+  html += '<div class="conteudo">';
+  if (!inf) html += '<div class="cartao">Essa pergunta não está mais no app. Pode pular.</div>';
+  else {
+    html += '<div class="cartao"><span class="mini" style="color:var(--destaque);font-weight:700">' + esc(inf.m.nome.toUpperCase()) + '</span><p class="pergunta">' + rico(inf.P.p) + '</p></div>';
+    html += q.ops.map(function (j, k) {
+      const on = s.resp[s.i] === j;
+      return '<button class="opcao' + (on ? ' escolhida' : '') + '" type="button" data-a="simResp" data-v="' + j + '" aria-pressed="' + on + '"><span>' + 'ABCD'[k] + ') ' + esc(inf.P.o[j]) + '</span>' + (on ? ico('check', 20) : '') + '</button>';
+    }).join('');
+  }
+  const ultima = s.i === N - 1;
+  html += '<div class="linha-btns">' + (s.i > 0 ? '<button class="btn sec" type="button" data-a="simIr" data-v="-1">Anterior</button>' : '') +
+    (ultima ? '<button class="btn" type="button" data-a="simTerminar">Terminar</button>' : '<button class="btn" type="button" data-a="simIr" data-v="1">Próxima</button>') + '</div>';
+  if (!ultima) html += '<button class="btn sec largo" type="button" data-a="simTerminar">Terminar agora</button>';
+  return {
+    html: html + '</div>', semAbas: true,
+    depois: function () {
+      if (!s.lim) return;
+      const tick = function () {
+        const rest = restanteSim(s), el = $('#simTempo');
+        if (rest <= 0) { terminarSim(true); return; }
+        if (el) { el.querySelector('span').textContent = fmtRelogio(rest); el.classList.toggle('pouco', rest <= 60); }
+      };
+      clearInterval(relogioSim);
+      relogioSim = setInterval(tick, 1000);
+      tick();
+    }
+  };
+}
+ACOES.simResp = function (el) {
+  const s = db.simAtual;
+  if (!s || s.fim) return;
+  s.resp[s.i] = +el.dataset.v;
+  salvar(); som('virar');
+  // Vai sozinho pra próxima, pra ficar rápido como numa prova.
+  clearTimeout(simAvanco);
+  const i = s.i;
+  if (i < s.qs.length - 1) simAvanco = setTimeout(function () { if (db.simAtual === s && s.i === i && rota.t === 'simulado' && rota.ver === 'prova') { s.i++; salvar(); desenhar(true); } }, 350);
+  atualizar();
+};
+let simAvanco = null;
+ACOES.simIr = function (el) {
+  const s = db.simAtual;
+  if (!s) return;
+  clearTimeout(simAvanco);
+  s.i = Math.max(0, Math.min(s.qs.length - 1, s.i + +el.dataset.v));
+  salvar(); desenhar(true);
+};
+ACOES.simTerminar = function () {
+  const s = db.simAtual;
+  if (!s) return;
+  const faltam = s.resp.filter(function (x) { return x == null; }).length;
+  if (faltam && !confirm('Ainda ' + (faltam === 1 ? 'falta 1 pergunta' : 'faltam ' + faltam + ' perguntas') + '. Terminar mesmo assim?')) return;
+  terminarSim(false);
+};
+function terminarSim(porTempo) {
+  const s = db.simAtual;
+  if (!s || s.fim) return;
+  clearInterval(relogioSim); relogioSim = null;
+  let certas = 0;
+  const mats = {};
+  s.qs.forEach(function (q, i) {
+    const inf = erroInfo(q.k);
+    if (!inf) return;
+    const r = s.resp[i], ok = r === inf.P.c;
+    if (ok) certas++;
+    mats[inf.m.id] = mats[inf.m.id] || [0, 0];
+    mats[inf.m.id][1]++; if (ok) mats[inf.m.id][0]++;
+    if (r != null) registrarResposta(inf.t.id, inf.m.id, ok, inf.n);
+  });
+  s.fim = true; s.porTempo = porTempo;
+  s.seg = Math.round(s.lim ? Math.min(s.lim, (Date.now() - s.ini) / 1000) : (Date.now() - s.ini) / 1000);
+  s.certas = certas; s.mats = mats;
+  db.simulados.push({ d: hojeStr(), total: s.qs.length, certas: certas, seg: s.seg });
+  if (db.simulados.length > 60) db.simulados.shift();
+  salvar();
+  som('feito');
+  if (porTempo) toast('Acabou o tempo!');
+  if (!marcarEstudo()) paoFalar(certas / s.qs.length >= 0.6 ? 'terminou' : 'donada');
+  if (rota.t === 'simulado') trocar({ ver: 'res' });
+}
+function simResultado(s) {
+  const N = s.qs.length, pct = Math.round(s.certas / N * 100);
+  const msg = pct >= 80 ? 'Mandou muito bem!' : pct >= 60 ? 'Foi bem! Tá no caminho.' : pct >= 40 ? 'Tá aprendendo! Olha a correção com calma.' : 'Simulado serve pra isso: achar o que treinar. Bora revisar!';
+  let html = topo({ titulo: 'Resultado', sub: 'Simulado', voltar: true, semCalc: true });
+  html += '<div class="conteudo"><div class="resultado entra">' + ARTE.pao(140) + '<div class="grande">' + s.certas + ' de ' + N + '</div><p class="frase" style="font-size:20px;color:var(--destaque)">' + msg + '</p>' +
+    '<p class="mini">' + pct + '% de acertos · ' + fmtTempo(s.seg) + (s.porTempo ? ' (acabou o tempo)' : '') + '</p></div>';
+  html += '<div class="cartao secao"><b>Por matéria</b>' + Object.keys(s.mats).map(function (k) {
+    const v = s.mats[k], p = Math.round(v[0] / v[1] * 100);
+    return '<div class="secao" style="gap:4px"><div class="linha-sec"><span>' + esc(MAT_POR_ID[k] ? MAT_POR_ID[k].nome : k) + '</span><span class="mini" style="font-weight:700">' + v[0] + ' de ' + v[1] + '</span></div><div class="barra"><i style="width:' + p + '%"></i></div></div>';
+  }).join('') + '</div>';
+  const nErros = listaErros().length;
+  html += '<div class="linha-btns"><button class="btn sec" type="button" data-a="simOutro">Fazer outro</button>' + (nErros ? '<button class="btn" type="button" data-a="ir" data-v="erros">Treinar erros</button>' : '') + '</div>';
+  html += '<section class="secao"><h2 class="titulo-sec">Correção</h2><div class="cartao" style="padding-top:2px;padding-bottom:2px">' + s.qs.map(function (q, i) {
+    const inf = erroInfo(q.k);
+    if (!inf) return '';
+    const r = s.resp[i], ok = r === inf.P.c;
+    return '<div class="correcao"><span class="mini">' + (i + 1) + '. ' + esc(inf.m.nome) + ' · ' + esc(inf.t.titulo) + '</span><b>' + rico(inf.P.p) + '</b>' +
+      (ok ? '<span class="r-ok">' + ico('check', 16) + ' ' + esc(inf.P.o[r]) + '</span>'
+        : '<span class="r-nao">' + (r == null ? 'Não respondeu' : 'Você marcou: ' + esc(inf.P.o[r])) + '</span><span class="r-ok">Certa: ' + esc(inf.P.o[inf.P.c]) + '</span><span class="mini" style="color:var(--explica);font-size:14px">' + rico(inf.P.e) + '</span>') + '</div>';
+  }).join('') + '</div></section>';
+  return { html: html + '</div>', semAbas: true };
+}
+ACOES.simOutro = function () { trocar({ ver: null }); };
+
+TELAS.erros = function () {
+  const s = sessao.err;
+  let html = topo({ titulo: 'Meus erros', sub: 'Treinar o que errou', ajuda: 'erros' }) + '<div class="conteudo">';
+  if (s) return { html: html + errosSessaoHTML(s) + '</div>', semAbas: true };
+  const lista = listaErros();
+  if (!lista.length) {
+    html += '<div class="cartao vazio-msg">' + ARTE.pao(110) + '<b style="color:var(--destaque)">Nenhum erro guardado!</b><span>Quando você errar uma pergunta numa aula ou num simulado, ela aparece aqui pra você treinar de novo.</span></div>';
+    if (db.errosLimpos) html += '<p class="mini centro">Você já acertou ' + plural(db.errosLimpos, 'pergunta que tinha errado', 'perguntas que tinha errado') + '. Orgulho!</p>';
+    return { html: html + '</div>', semAbas: true };
+  }
+  const porMat = {};
+  lista.forEach(function (k) { const n = erroInfo(k).m.nome; porMat[n] = (porMat[n] || 0) + 1; });
+  html += '<div class="cartao borda secao"><h2 class="titulo-sec">' + plural(lista.length, 'pergunta pra treinar', 'perguntas pra treinar') + '</h2>' +
+    '<div class="tags">' + Object.keys(porMat).map(function (n) { return '<span class="tag">' + esc(n) + ' · ' + porMat[n] + '</span>'; }).join('') + '</div>' +
+    '<p class="mini">Acertou, sai da lista. Errou de novo, ela fica pra próxima.</p>' +
+    '<button class="btn largo" type="button" data-a="errComecar">' + ico('alvo', 18) + ' Treinar ' + (lista.length > 15 ? '15 agora' : 'agora') + '</button></div>';
+  if (db.errosLimpos) html += '<p class="mini centro">Você já acertou ' + plural(db.errosLimpos, 'pergunta que tinha errado', 'perguntas que tinha errado') + '.</p>';
+  return { html: html + '</div>', semAbas: true };
+};
+ACOES.errComecar = function () {
+  const fila = embaralha(listaErros()).slice(0, 15);
+  sessao.err = { fila: fila, ops: fila.map(function (k) { return embaralha(erroInfo(k).P.o.map(function (_, j) { return j; })); }), i: 0, escolha: null, acertos: 0, fim: false };
+  desenhar(true);
+};
+function errosSessaoHTML(s) {
+  const N = s.fila.length;
+  if (s.fim) {
+    const resta = listaErros().length;
+    return '<div class="resultado entra">' + ARTE.pao(150) + '<div class="grande">' + s.acertos + ' de ' + N + '</div><p class="frase" style="font-size:20px;color:var(--destaque)">' +
+      (s.acertos === N ? 'Todas certas! Saíram da lista.' : s.acertos ? plural(s.acertos, 'saiu', 'saíram') + ' da lista. Tá aprendendo!' : 'Essas são difíceis mesmo. Relê o resumo e tenta de novo.') + '</p>' +
+      '<p class="mini">' + (resta ? plural(resta, 'pergunta ainda na lista', 'perguntas ainda na lista') : 'A lista ficou vazia!') + '</p></div>' +
+      (resta ? '<button class="btn largo" type="button" data-a="errComecar">Treinar mais</button>' : '') + '<button class="btn sec largo" type="button" data-a="voltar">Voltar</button>';
+  }
+  const inf = erroInfo(s.fila[s.i]), resp = s.escolha != null, ok = resp && s.escolha === inf.P.c;
+  let h = '<div class="secao" style="gap:8px"><div class="linha-sec"><span class="mini">Pergunta ' + (s.i + 1) + ' de ' + N + '</span><span class="mini">' + plural(s.acertos, 'certa', 'certas') + '</span></div><div class="barra"><i style="width:' + (s.i / N * 100) + '%"></i></div></div>';
+  h += '<div class="cartao"><span class="mini" style="color:var(--destaque);font-weight:700">' + esc(inf.m.nome.toUpperCase()) + ' · ' + esc(inf.t.titulo) + '</span><p class="pergunta">' + rico(inf.P.p) + '</p></div>';
+  h += s.ops[s.i].map(function (j, k) {
+    let cls = 'opcao';
+    if (resp) { if (j === inf.P.c) cls += ' certa'; else if (j === s.escolha) cls += ' errada'; }
+    return '<button class="' + cls + '" type="button" data-a="errResp" data-v="' + j + '"' + (resp ? ' disabled' : '') + '><span>' + 'ABCD'[k] + ') ' + esc(inf.P.o[j]) + '</span>' +
+      (resp && j === inf.P.c ? ico('check', 22) : resp && j === s.escolha ? ico('fechar', 20) : '') + '</button>';
+  }).join('');
+  if (resp) {
+    h += '<div class="explica entra"><b class="' + (ok ? 'ok' : 'nao') + '">' + (ok ? 'Isso! Saiu da lista.' : 'Ainda não.') + '</b> ' + rico(inf.P.e) + '</div>' +
+      '<button class="btn largo" type="button" data-a="errProx">' + (s.i + 1 < N ? 'Próxima' : 'Ver resultado') + '</button>';
+  }
+  return h;
+}
+ACOES.errResp = function (el) {
+  const s = sessao.err;
+  if (!s || s.escolha != null) return;
+  const inf = erroInfo(s.fila[s.i]);
+  s.escolha = +el.dataset.v;
+  const ok = s.escolha === inf.P.c;
+  if (ok) { s.acertos++; som('acerto'); } else som('erro');
+  registrarResposta(inf.t.id, inf.m.id, ok, inf.n);
+  salvar(); atualizar();
+  const ex = document.querySelector('.explica');
+  if (ex && ex.scrollIntoView) ex.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+};
+ACOES.errProx = function () {
+  const s = sessao.err;
+  if (!s) return;
+  s.i++; s.escolha = null;
+  if (s.i >= s.fila.length) {
+    s.fim = true; som('feito');
+    if (!marcarEstudo()) paoFalar(s.acertos ? 'terminou' : 'donada');
+  }
+  salvar(); desenhar(true);
 };
 
 // ================= Ajuda e ajustes =================
 TELAS.ajuda = function () {
-  const partes = [['inicio', 'inicio'], ['materias', 'materias'], ['topico', 'materias'], ['cartoes', 'cartoes'], ['materiais', 'materiais'], ['plano', 'plano'], ['calma', 'calma'], ['redacao', 'lapis'], ['poponi', 'coracao']];
+  const partes = [['inicio', 'inicio'], ['materias', 'materias'], ['topico', 'materias'], ['cartoes', 'cartoes'], ['materiais', 'materiais'], ['plano', 'plano'], ['calma', 'calma'], ['redacao', 'lapis'], ['simulado', 'relogio'], ['erros', 'alvo'], ['poponi', 'coracao'], ['conquistas', 'medalha']];
   let html = topo({ titulo: 'Ajuda', sub: 'Esqueceu como funciona? Toca aqui.' }) + '<div class="conteudo">';
   html += '<button class="item cartao borda" type="button" data-a="tourDeNovo" style="padding:12px 14px"><span class="recado-gato" style="width:54px;height:54px;background:var(--rosa-claro)">' + ARTE.pao(48) + '</span><span class="item-txt"><b>Ver o tour de novo</b><span class="mini">O Pãozinho mostra tudo outra vez</span></span><span class="seta">' + ico('seta', 18) + '</span></button>';
   html += '<section class="secao"><h2 class="titulo-sec">Como funciona cada parte</h2><div class="lista">' + partes.map(function (p) {
     return itemSeta({ titulo: AJUDA[p[0]][0], sub: AJUDA[p[0]][1].split('. ')[0] + '.', ico: ico(p[1], 18), attrs: 'data-a="ajudaTela" data-v="' + p[0] + '"' });
   }).join('') + '</div></section>';
-  html += '<div class="lista">' + itemSeta({ titulo: 'Ajustes', sub: 'Sons, animações, Pãozinho e cópia de segurança', ico: ico('engrenagem', 18), attrs: 'data-a="ir" data-v="ajustes"' }) + '</div>';
+  html += '<div class="lista">' + itemSeta({ titulo: 'Ajustes', sub: 'Modo noite, sons, Pãozinho e cópia de segurança', ico: ico('engrenagem', 18), attrs: 'data-a="ir" data-v="ajustes"' }) + '</div>';
   html += '<p class="mini centro">Miaula ' + VERSAO_APP + ' · feito com carinho pelo MOSS</p></div>';
   return { html: html };
 };
@@ -819,6 +1115,10 @@ TELAS.ajustes = function () {
   };
   let html = topo({ titulo: 'Ajustes', ajuda: 'ajustes' }) + '<div class="conteudo">';
   html += '<section class="secao"><h2 class="titulo-sec">Seu nome</h2><input class="campo" type="text" maxlength="30" value="' + esc(db.nome) + '" data-in="nome" aria-label="Seu nome"></section>';
+  html += '<section class="secao"><h2 class="titulo-sec">Aparência</h2><div class="chips">' + [['claro', 'Claro'], ['escuro', 'Modo noite'], ['auto', 'Igual ao celular']].map(function (t) {
+    const on = (db.ajustes.tema || 'auto') === t[0];
+    return '<button class="chip' + (on ? ' on' : '') + '" type="button" data-a="tema" data-v="' + t[0] + '" aria-pressed="' + on + '">' + (t[0] === 'escuro' ? ico('lua', 16) + ' ' : '') + t[1] + '</button>';
+  }).join('') + '</div><p class="mini">O modo noite deixa a tela escura, pra estudar à noite sem cansar a vista.</p></section>';
   html += '<div class="cartao" style="padding-top:4px;padding-bottom:4px">' + ch('sons', 'Sons', 'Pop, acertos e o som da Poponi') + ch('animacoes', 'Animações', 'Gatinhos respirando e telas se mexendo') + ch('pao', 'Pãozinho flutuante', 'Ele aparece às vezes com recadinhos') + '</div>';
   html += '<section class="secao"><h2 class="titulo-sec">Cópia de segurança</h2><p class="mini">Guarda o seu progresso num arquivo. Útil se trocar de celular. (As fotos e PDFs não vão junto.)</p>' +
     '<div class="linha-btns"><button class="btn sec" type="button" data-a="exportar">' + ico('baixar', 18) + ' Baixar cópia</button>' +
@@ -833,7 +1133,17 @@ ENTRADAS.ajuste = function (el) {
   if (el.dataset.k === 'pao') { if (el.checked) paoFalar('', 'Voltei! Tô aqui do seu lado.'); else paoEsconder(true); }
   if (el.dataset.k === 'sons' && el.checked) som('ok');
 };
-function aplicarAjustes() { document.body.classList.toggle('sem-anim', !db.ajustes.animacoes); }
+const CEL_ESCURO = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function temaEscuro() { const t = db.ajustes.tema || 'auto'; return t === 'escuro' || (t === 'auto' && !!CEL_ESCURO && CEL_ESCURO.matches); }
+function aplicarAjustes() {
+  document.body.classList.toggle('sem-anim', !db.ajustes.animacoes);
+  const escuro = temaEscuro();
+  document.body.classList.toggle('escuro', escuro);
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', escuro ? '#1A1114' : '#7A1E3A');
+}
+if (CEL_ESCURO) { try { CEL_ESCURO.addEventListener('change', aplicarAjustes); } catch (e) { try { CEL_ESCURO.addListener(aplicarAjustes); } catch (e2) { } } }
+ACOES.tema = function (el) { db.ajustes.tema = el.dataset.v; salvar(); aplicarAjustes(); som('ok'); atualizar(); };
 ACOES.exportar = function () {
   const blob = new Blob([JSON.stringify(db)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -940,7 +1250,10 @@ function popularDemo() {
   const h = hojeStr();
   db.tourVisto = true;
   db.dias = [-4, -3, -2, -1, 0].map(function (n) { return somaDias(h, n); });
-  db.poponi = { dias: 5, ultimo: h, aviso: null };
+  db.poponi = { dias: 5, ultimo: h, aviso: null, roupa: 'lacinho', recorde: 5 };
+  ['mat-funcoes:1', 'mat-funcoes:3', 'bio-citologia:2', 'mat-conjuntos:4', 'his-brasil-colonia:0'].forEach(function (k) { db.erros[k] = { n: 1, d: h }; });
+  db.errosLimpos = 3;
+  db.simulados = [{ d: somaDias(h, -2), total: 20, certas: 13, seg: 1260 }];
   db.prog = {
     'mat-conjuntos': { resumo: true, quiz: 88, cartoes: true },
     'mat-funcoes': { resumo: true, quiz: 75 },
@@ -991,6 +1304,7 @@ function iniciar() {
   paoMontar();
   try { if (window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function () { window.speechSynthesis.getVoices(); }; } } catch (e) { }
   checarPoponi();
+  const novasMedalhas = checarConquistas(true);
   let r = { t: 'inicio', p: 0 };
   if (location.hash.length > 1) {
     const hp = new URLSearchParams(location.hash.slice(1));
@@ -1003,6 +1317,8 @@ function iniciar() {
   if (deveMostrarInstalar()) abrirInstalar();
   else if (!db.tourVisto && !PARAMS.has('semtour')) abrirTour();
   else if (!PARAMS.has('quieto')) saudar();
+  // Medalhas que ela já merecia antes desta versão aparecem logo na primeira abertura.
+  if (novasMedalhas.length && !PARAMS.has('quieto')) { filaConquistas = novasMedalhas; timerConquistas = setTimeout(mostrarConquistas, 2500); }
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     // Quando chega uma versão nova do app, recarrega uma vez pra ela já aparecer.
     const tinhaVersao = !!navigator.serviceWorker.controller;
@@ -1014,5 +1330,5 @@ function iniciar() {
     navigator.serviceWorker.register('sw.js').then(function (reg) { reg.update().catch(function () { }); }).catch(function () { });
   }
 }
-window.__miaula = { db: function () { return db; }, ir: ir, abrirAba: abrirAba, ACOES: ACOES, TELAS: TELAS, paoFalar: paoFalar, calcAvaliar: calcAvaliar, calcFormatar: calcFormatar, marcarEstudo: marcarEstudo, checarPoponi: checarPoponi, fasePoponi: fasePoponi, gerarHoje: gerarHoje, abrirOv: abrirOv, rota: function () { return rota; }, sessao: function () { return sessao; } };
+window.__miaula = { db: function () { return db; }, ir: ir, abrirAba: abrirAba, ACOES: ACOES, TELAS: TELAS, paoFalar: paoFalar, calcAvaliar: calcAvaliar, calcFormatar: calcFormatar, marcarEstudo: marcarEstudo, checarPoponi: checarPoponi, fasePoponi: fasePoponi, gerarHoje: gerarHoje, abrirOv: abrirOv, rota: function () { return rota; }, sessao: function () { return sessao; }, checarConquistas: checarConquistas, terminarSim: terminarSim, listaErros: listaErros, temaEscuro: temaEscuro, aplicarAjustes: aplicarAjustes };
 iniciar();
