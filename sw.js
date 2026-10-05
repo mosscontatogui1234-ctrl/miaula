@@ -1,5 +1,5 @@
 // Guarda o app no celular pra funcionar sem internet.
-const VERSAO = 'miaula-v5';
+const VERSAO = 'miaula-v6';
 const ARQUIVOS = [
   './', 'index.html', 'estilo.css', 'arte.js', 'nucleo.js', 'telas.js', 'manifest.json',
   'conteudo/materias.js', 'conteudo/extras.js',
