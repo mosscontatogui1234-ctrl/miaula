@@ -5,7 +5,7 @@ window.ARTE = (function () {
     w = w || 120;
     const h = Math.round(w * 142 / 182);
     return '<svg class="pao-svg" width="' + w + '" height="' + h + '" viewBox="14 46 182 142" aria-hidden="true">' +
-      '<ellipse class="pao-sombra" cx="100" cy="184" rx="70" ry="5" fill="#E8CACA"/>' +
+      '<ellipse class="pao-sombra" cx="100" cy="184" rx="70" ry="5" fill="#7A1E3A" fill-opacity="0.14"/>' +
       '<g class="pao-corpo">' +
       '<path d="M164 160C186 158 192 140 182 128" stroke="#5A8432" stroke-width="12" fill="none" stroke-linecap="round"/>' +
       '<path d="M38 98L36 62L64 82Z" fill="#6E9B3F" stroke="#6E9B3F" stroke-width="6" stroke-linejoin="round"/>' +
@@ -30,8 +30,27 @@ window.ARTE = (function () {
       '</g></svg>';
   }
 
-  // Poponi: fase 0 a 4. dormindo = olhos fechados (antes do primeiro dia).
-  function poponi(fase, w, dormindo) {
+  // Roupinhas da Poponi (desenhadas nas coordenadas da gata sentada; na neném descem um pouco).
+  const ROUPAS = {
+    lacinho: { y: 41, svg: '<g transform="translate(66 60) rotate(-20)"><path d="M0 0L-17 -11L-17 11Z" fill="#E05A7A" stroke="#C23A5C" stroke-width="2" stroke-linejoin="round"/><path d="M0 0L17 -11L17 11Z" fill="#E05A7A" stroke="#C23A5C" stroke-width="2" stroke-linejoin="round"/><circle r="5.5" fill="#C23A5C"/></g>' },
+    oculos: { y: 38, svg: '<g fill="rgba(255,255,255,0.18)" stroke="#3A1F27" stroke-width="3.5"><circle cx="82" cy="96" r="15"/><circle cx="118" cy="96" r="15"/></g><path d="M97 95Q100 91 103 95M67 93L56 88M133 93L144 88" stroke="#3A1F27" stroke-width="3.5" fill="none" stroke-linecap="round"/>' },
+    flores: { y: 41, svg: (function () {
+      const pts = [[66, 62, '#F2B8C2'], [80, 53, '#FFF6F4'], [100, 49, '#C9A7E8'], [120, 53, '#FFF6F4'], [134, 62, '#F2B8C2']];
+      return '<path d="M60 66Q100 38 140 66" stroke="#6E9B3F" stroke-width="3" fill="none"/>' + pts.map(function (p) {
+        return '<g transform="translate(' + p[0] + ' ' + p[1] + ')"><circle cx="0" cy="-5" r="4.5" fill="' + p[2] + '"/><circle cx="5" cy="0" r="4.5" fill="' + p[2] + '"/><circle cx="0" cy="5" r="4.5" fill="' + p[2] + '"/><circle cx="-5" cy="0" r="4.5" fill="' + p[2] + '"/><circle r="3" fill="#F2C35A"/></g>';
+      }).join('');
+    })() },
+    capelo: { y: 41, svg: '<path d="M74 48L74 60Q100 70 126 60L126 48Z" fill="#3A2F2A"/><path d="M100 28L152 42L100 56L48 42Z" fill="#2B2420" stroke="#1A1412" stroke-width="1.5" stroke-linejoin="round"/><path d="M100 42L144 54L144 74" stroke="#F2C35A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="144" cy="77" r="5" fill="#F2C35A"/>' },
+    cachecol: { y: 28, svg: '<path d="M62 128Q100 148 138 128L140 141Q100 162 60 141Z" fill="#7A1E3A"/><path d="M116 142L124 172L110 173L104 147Z" fill="#8F2E4B"/><path d="M70 133L72 145M90 138L91 151M110 138L109 151M130 133L128 145" stroke="#E9B8C0" stroke-width="3" stroke-linecap="round"/>' }
+  };
+  function roupa(nome, fase) {
+    const r = ROUPAS[nome];
+    if (!r) return '';
+    return fase === 0 ? '<g transform="translate(0 ' + r.y + ')">' + r.svg + '</g>' : r.svg;
+  }
+
+  // Poponi: fase 0 a 4. dormindo = olhos fechados (antes do primeiro dia). veste = roupinha.
+  function poponi(fase, w, dormindo, veste) {
     w = w || 120;
     if (fase === 0) {
       const olhos = dormindo
@@ -39,7 +58,7 @@ window.ARTE = (function () {
         : '<g class="pp-olhos"><ellipse cx="84" cy="134" rx="11" ry="13" fill="#2A2A33"/><ellipse cx="116" cy="134" rx="11" ry="13" fill="#2A2A33"/>' +
           '<circle cx="88" cy="129" r="4.5" fill="#fff"/><circle cx="120" cy="129" r="4.5" fill="#fff"/><circle cx="81" cy="139" r="2" fill="#fff"/><circle cx="113" cy="139" r="2" fill="#fff"/></g>';
       return '<svg class="pp-svg" width="' + w + '" height="' + w + '" viewBox="0 0 200 200" aria-hidden="true">' +
-        '<ellipse cx="100" cy="184" rx="40" ry="5" fill="#E8D8D8"/>' +
+        '<ellipse cx="100" cy="184" rx="40" ry="5" fill="#3A1F27" fill-opacity="0.12"/>' +
         '<g class="pp-corpo">' +
         '<path d="M68 112L66 84L90 100Z" fill="#E8964A" stroke="#E8964A" stroke-width="6" stroke-linejoin="round"/>' +
         '<path d="M132 112L134 84L110 100Z" fill="#2B2420" stroke="#2B2420" stroke-width="6" stroke-linejoin="round"/>' +
@@ -51,11 +70,12 @@ window.ARTE = (function () {
         '<path d="M97 149L103 149L100 153Z" fill="#D98A9C"/>' +
         '<path d="M96 156Q100 160 104 156" stroke="#2A2A33" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
         '<circle cx="113" cy="161" r="3.5" fill="#2B2420"/>' +
+        roupa(veste, 0) +
         '</g></svg>';
     }
     const m1 = fase >= 2, m2 = fase >= 3, m3 = fase >= 4, bigode = fase >= 3;
     return '<svg class="pp-svg" width="' + w + '" height="' + w + '" viewBox="0 0 200 200" aria-hidden="true">' +
-      '<ellipse cx="100" cy="194" rx="62" ry="5" fill="#E8D8D8"/>' +
+      '<ellipse cx="100" cy="194" rx="62" ry="5" fill="#3A1F27" fill-opacity="0.12"/>' +
       '<g class="pp-rabo"><path d="M140 172C172 168 180 136 164 118" stroke="#E8964A" stroke-width="14" fill="none" stroke-linecap="round"/>' +
       (m1 ? '<circle cx="172" cy="140" r="6" fill="#2B2420"/>' : '') +
       '<circle cx="164" cy="118" r="7.5" fill="#FFF8F0"/></g>' +
@@ -79,6 +99,7 @@ window.ARTE = (function () {
       '<path d="M92 114Q96 120 100 114Q104 120 108 114" stroke="#2A2A33" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
       '<circle cx="116" cy="121" r="4" fill="#2B2420"/>' +
       (bigode ? '<path d="M56 104L40 100M56 110L40 112M144 104L160 100M144 110L160 112" stroke="#8A5A3A" stroke-width="2" stroke-linecap="round"/>' : '') +
+      roupa(veste, fase) +
       '</g></svg>';
   }
 
@@ -125,7 +146,14 @@ window.ARTE = (function () {
     busca: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
     girar: '<path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/>',
     baixar: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
-    subir: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'
+    subir: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+    estrela: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    medalha: '<circle cx="12" cy="15" r="6"/><path d="M8.5 10.5L6 3h4l2 4 2-4h4l-2.5 7.5"/>',
+    relogio: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+    alvo: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+    lua: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>',
+    cadeado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    cabide: '<path d="M12 7a2 2 0 1 1 2-2c0 1.2-2 1.5-2 3v1"/><path d="M12 9L3 16h18z"/>'
   };
 
   function icone(nome, tam, extra) {
@@ -133,5 +161,5 @@ window.ARTE = (function () {
     return '<svg class="ico" width="' + tam + '" height="' + tam + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + (P[nome] || '') + '</svg>';
   }
 
-  return { pao: pao, poponi: poponi, logo: logo, icone: icone };
+  return { pao: pao, poponi: poponi, logo: logo, icone: icone, roupas: Object.keys(ROUPAS) };
 })();
