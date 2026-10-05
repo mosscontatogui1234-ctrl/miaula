@@ -305,9 +305,12 @@ window.AJUDA = {
   calma: ['Calma', 'Quando bater ansiedade, vem aqui. Toque em "Começar" pra respirar junto com o Pãozinho, ou escolha um dos exercícios.'],
   redacao: ['Redação', 'Toda semana tem um tema novo. Leia as ideias, siga o caminho do texto e escreva. Depois marque a lista "Conferir meu texto".'],
   semana: ['Sua semana', 'Um resumo de como foi a sua semana: tempo estudando, acertos, dias e o que vale revisar.'],
-  poponi: ['A Poponi', 'Ela cresce a cada dia que você estuda. Se pular um dia, ela só encolhe uma fase. Estudar é: terminar um resumo, um quiz, uns cartões ou uma redação.'],
+  poponi: ['A Poponi', 'Ela cresce a cada dia que você estuda. Se pular um dia, ela só encolhe uma fase. Estudar é: terminar um resumo, um quiz, uns cartões ou uma redação. Conforme ela cresce, você ganha roupinhas pra ela no Guarda-roupa.'],
+  simulado: ['Simulado', 'Uma prova de treino com perguntas misturadas de várias matérias. Escolha as matérias, quantas perguntas e se quer tempo. Você só vê o que acertou no final, igual numa prova de verdade.'],
+  erros: ['Meus erros', 'Toda pergunta que você erra vem pra cá. Quando acertar ela aqui (ou em qualquer lugar), ela sai da lista. É o jeito mais rápido de melhorar.'],
+  conquistas: ['Conquistas', 'Medalhas que você ganha estudando. Algumas também dão roupinhas pra Poponi. As cinzas ainda faltam: embaixo de cada uma diz como ganhar.'],
   consulta: ['Consulta rápida', 'Material pra olhar rapidinho enquanto estuda.'],
   videos: ['Videoaulas e links', 'Toque num item pra abrir no YouTube ou no navegador. Use os botões de cima pra filtrar por matéria.'],
   ajuda: ['Ajuda', 'Aqui você revê o tour e as explicações de cada parte do app.'],
-  ajustes: ['Ajustes', 'Ligue ou desligue sons, animações e o Pãozinho flutuante. Também dá pra fazer cópia de segurança.']
+  ajustes: ['Ajustes', 'Escolha o modo claro ou noite, ligue ou desligue sons, animações e o Pãozinho flutuante. Também dá pra fazer cópia de segurança.']
 };
