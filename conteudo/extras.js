@@ -351,6 +351,7 @@ window.AJUDA = {
   poponi: ['A Poponi', 'Ela cresce a cada dia que você estuda. Se pular um dia, ela só encolhe uma fase. Estudar é: terminar um resumo, um quiz, uns cartões ou uma redação. Conforme ela cresce, você ganha roupinhas pra ela no Guarda-roupa.'],
   simulado: ['Simulado', 'Uma prova de treino com perguntas misturadas de várias matérias. Escolha as matérias, quantas perguntas e se quer tempo. Você só vê o que acertou no final, igual numa prova de verdade.'],
   erros: ['Meus erros', 'Toda pergunta que você erra vem pra cá. Quando acertar ela aqui (ou em qualquer lugar), ela sai da lista. É o jeito mais rápido de melhorar.'],
+  jogo: ['Sudoku de gatinho', 'Um joguinho pra descansar a cabeça. Esconda os gatinhos: um em cada linha, um em cada coluna e um em cada cor, sem nenhum encostar no outro (nem na diagonal). Toque uma vez pra pôr uma patinha (quer dizer "aqui não tem gato") e duas vezes pra pôr o gatinho. Travou? Toque em Dica. O jogo não conta como estudo pra Poponi, mas passar 10 fases dá uma medalha.'],
   conquistas: ['Conquistas', 'Medalhas que você ganha estudando. Algumas também dão roupinhas pra Poponi. As cinzas ainda faltam: embaixo de cada uma diz como ganhar.'],
   consulta: ['Consulta rápida', 'Material pra olhar rapidinho enquanto estuda.'],
   videos: ['Videoaulas e links', 'Toque num item pra abrir no YouTube ou no navegador. Use os botões de cima pra filtrar por matéria.'],
